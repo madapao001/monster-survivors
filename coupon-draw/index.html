@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>赛博券池 | 霓虹抽奖</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --neon-cyan: #00f3ff;
+      --neon-pink: #ff00ff;
+      --neon-purple: #bd00ff;
+      --neon-yellow: #fcee0a;
+      --dark-bg: #050510;
+      --panel-bg: rgba(10, 10, 30, 0.85);
+      --grid-color: rgba(0, 243, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--dark-bg);
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 赛博网格背景 */
+    .cyber-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .cyber-grid::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 0%, var(--dark-bg) 75%);
+    }
+
+    /* 扫描线 */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+      animation: scanlineMove 8s linear infinite;
+    }
+
+    @keyframes scanlineMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(4px); }
+    }
+
+    /* 浮动粒子 */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--neon-cyan);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: floatUp linear infinite;
+      box-shadow: 0 0 6px var(--neon-cyan);
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+    }
+
+    /* 主容器 */
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* 标题区 */
+    header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+
+    .glitch-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      position: relative;
+      text-shadow:
+        0 0 10px var(--neon-cyan),
+        0 0 40px var(--neon-cyan),
+        0 0 80px var(--neon-cyan);
+      animation: glitchText 3s infinite;
+    }
+
+    .glitch-title::before,
+    .glitch-title::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .glitch-title::before {
+      color: var(--neon-pink);
+      clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+      animation: glitch1 2.5s infinite linear alternate-reverse;
+    }
+
+    .glitch-title::after {
+      color: var(--neon-cyan);
+      clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+      animation: glitch2 3s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitchText {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-3px, 1px); }
+      94% { transform: translate(3px, -1px); }
+      96% { transform: translate(-2px, 2px); }
+    }
+
+    @keyframes glitch1 {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(-3px, 0); }
+      40% { transform: translate(3px, 0); }
+      60% { transform: translate(-1px, 0); }
+      80% { transform: translate(2px, 0); }
+    }
+
+    @keyframes glitch2 {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(3px, 0); }
+      40% { transform: translate(-3px, 0); }
+      60% { transform: translate(1px, 0); }
+      80% { transform: translate(-2px, 0); }
+    }
+
+    .subtitle {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      color: var(--neon-pink);
+      letter-spacing: 8px;
+      margin-top: 12px;
+      opacity: 0.85;
+      text-shadow: 0 0 10px var(--neon-pink);
+    }
+
+    /* 角标装饰 */
+    .cyber-card {
+      background: var(--panel-bg);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      position: relative;
+      backdrop-filter: blur(10px);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .cyber-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      border-top: 3px solid var(--neon-cyan);
+      border-left: 3px solid var(--neon-cyan);
+    }
+
+    .cyber-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      border-bottom: 3px solid var(--neon-cyan);
+      border-right: 3px solid var(--neon-cyan);
+    }
+
+    .card-inner {
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem;
+      color: var(--neon-cyan);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    }
+
+    .card-title .icon {
+      font-size: 1.3rem;
+    }
+
+    /* 管理员区域 */
+    .admin-toggle {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .admin-toggle button {
+      background: transparent;
+      border: 1px solid rgba(255, 0, 255, 0.4);
+      color: var(--neon-pink);
+      padding: 8px 20px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .admin-toggle button:hover {
+      background: rgba(255, 0, 255, 0.15);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+    }
+
+    .admin-panel {
+      display: none;
+    }
+
+    .admin-panel.active {
+      display: block;
+    }
+
+    /* 输入框 */
+    .cyber-input-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .cyber-input {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      color: #fff;
+      padding: 12px 16px;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .cyber-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    }
+
+    .cyber-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* 按钮 */
+    .cyber-btn {
+      position: relative;
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(189, 0, 255, 0.15));
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 12px 28px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      overflow: hidden;
+    }
+
+    .cyber-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .cyber-btn:hover::before {
+      left: 100%;
+    }
+
+    .cyber-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.3), rgba(189, 0, 255, 0.3));
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .cyber-btn:active {
+      transform: translateY(1px);
+    }
+
+    .cyber-btn.pink {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+      background: linear-gradient(135deg, rgba(255, 0, 255, 0.15), rgba(189, 0, 255, 0.15));
+    }
+
+    .cyber-btn.pink:hover {
+      background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(189, 0, 255, 0.3));
+      box-shadow: 0 0 25px rgba(255, 0, 255, 0.3);
+    }
+
+    .cyber-btn.yellow {
+      border-color: #00ccff;
+      color: #fff;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ccff, #3388ff, #cc33ff, #ff00ff);
+      background-size: 200% 100%;
+      box-shadow: 0 0 25px rgba(0, 204, 255, 0.4), 0 0 50px rgba(255, 0, 255, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.15);
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+      animation: neonShift 3s ease infinite;
+    }
+
+    @keyframes neonShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .cyber-btn.yellow:hover {
+      box-shadow: 0 0 40px rgba(0, 204, 255, 0.7), 0 0 80px rgba(255, 0, 255, 0.5), 0 0 120px rgba(0, 204, 255, 0.2), inset 0 0 25px rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .cyber-btn.yellow:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .cyber-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* 优惠券列表 */
+    .coupon-list {
+      margin-top: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .coupon-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .coupon-list::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .coupon-list::-webkit-scrollbar-thumb {
+      background: var(--neon-cyan);
+      border-radius: 3px;
+    }
+
+    .coupon-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(0, 243, 255, 0.05);
+      border-left: 3px solid var(--neon-cyan);
+      margin-bottom: 8px;
+      transition: all 0.3s;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+    }
+
+    .coupon-item:hover {
+      background: rgba(0, 243, 255, 0.1);
+      transform: translateX(4px);
+    }
+
+    .coupon-item.used {
+      opacity: 0.4;
+      border-left-color: #666;
+      text-decoration: line-through;
+    }
+
+    .coupon-item .remove-btn {
+      background: transparent;
+      border: none;
+      color: #ff4444;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0 6px;
+      transition: transform 0.2s;
+    }
+
+    .coupon-item .remove-btn:hover {
+      transform: scale(1.3);
+    }
+
+    .coupon-tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 2px;
+      margin-left: 10px;
+    }
+
+    .coupon-tag.available {
+      background: rgba(0, 243, 255, 0.2);
+      color: var(--neon-cyan);
+      border: 1px solid var(--neon-cyan);
+    }
+
+    .coupon-tag.used {
+      background: rgba(255, 0, 0, 0.2);
+      color: #ff6666;
+      border: 1px solid #ff4444;
+    }
+
+    .value-tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 2px;
+      margin-left: 8px;
+      font-family: 'Orbitron', monospace;
+    }
+
+    .value-tag.v5 {
+      background: rgba(252, 238, 10, 0.15);
+      color: var(--neon-yellow);
+      border: 1px solid var(--neon-yellow);
+    }
+
+    .value-tag.v3 {
+      background: rgba(0, 243, 255, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid var(--neon-cyan);
+    }
+
+    .value-select {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .value-select label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      padding: 8px 16px;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.3s;
+      font-family: 'Orbitron', monospace;
+    }
+
+    .value-select label:hover {
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .value-select input[type="radio"] {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .value-select input[type="radio"]:checked {
+      border-color: var(--neon-pink);
+      background: var(--neon-pink);
+      box-shadow: 0 0 8px var(--neon-pink);
+    }
+
+    .value-select input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 4px; height: 4px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    /* 统计信息 */
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0, 243, 255, 0.15);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.8rem;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 15px rgba(252, 238, 10, 0.5);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 4px;
+      letter-spacing: 2px;
+    }
+
+    /* 抽奖区域 */
+    .draw-section {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .draw-wheel-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto 32px;
+    }
+
+    .draw-wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid var(--neon-cyan);
+      position: relative;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+      box-shadow:
+        0 0 30px rgba(0, 243, 255, 0.2),
+        inset 0 0 30px rgba(0, 243, 255, 0.1);
+      animation: wheelPulse 2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    @keyframes wheelPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(0, 243, 255, 0.2), inset 0 0 30px rgba(0, 243, 255, 0.1); }
+      50% { box-shadow: 0 0 60px rgba(0, 243, 255, 0.4), inset 0 0 50px rgba(0, 243, 255, 0.2); }
+    }
+
+    .wheel-inner {
+      position: absolute;
+      inset: 15px;
+      border-radius: 50%;
+      border: 1px dashed rgba(0, 243, 255, 0.4);
+      animation: wheelSpin 20s linear infinite;
+    }
+
+    @keyframes wheelSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .wheel-center {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .wheel-icon {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 15px var(--neon-cyan));
+      animation: iconFloat 3s ease-in-out infinite;
+      border-radius: 50%;
+    }
+
+    .draw-wheel.spinning .wheel-icon {
+      animation: iconSpin 0.3s linear infinite;
+    }
+
+    @keyframes iconSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes iconFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .wheel-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      color: var(--neon-cyan);
+      margin-top: 8px;
+      letter-spacing: 3px;
+    }
+
+    .wheel-ring {
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      border: 1px solid rgba(189, 0, 255, 0.3);
+      animation: wheelSpin 15s linear infinite reverse;
+    }
+
+    .wheel-ring::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 0, 255, 0.2);
+    }
+
+    /* 抽奖时动画 */
+    .draw-wheel.spinning {
+      animation: wheelSpinFast 0.1s linear infinite, wheelPulse 0.5s ease-in-out infinite;
+    }
+
+    @keyframes wheelSpinFast {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* 用户信息输入 */
+    .user-form {
+      max-width: 400px;
+      margin: 0 auto 24px;
+    }
+
+    .user-form .cyber-input {
+      width: 100%;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .draw-btn {
+      font-size: 1.2rem;
+      padding: 16px 48px;
+      letter-spacing: 4px;
+    }
+
+    .draw-btn .btn-glitch {
+      display: inline-block;
+      animation: btnGlitch 2s infinite;
+    }
+
+    @keyframes btnGlitch {
+      0%, 100% { transform: translate(0); }
+      92% { transform: translate(0); }
+      93% { transform: translate(-2px, 1px); }
+      94% { transform: translate(2px, -1px); }
+      95% { transform: translate(0); }
+    }
+
+    /* 结果展示 */
+    .result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.92);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+    }
+
+    .result-overlay.active {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .result-card {
+      background: var(--panel-bg);
+      border: 2px solid var(--neon-yellow);
+      padding: 40px 50px;
+      text-align: center;
+      position: relative;
+      max-width: 90%;
+      width: 500px;
+      box-shadow:
+        0 0 40px rgba(252, 238, 10, 0.2),
+        inset 0 0 40px rgba(252, 238, 10, 0.05);
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, var(--neon-cyan), var(--neon-pink), var(--neon-yellow), var(--neon-purple));
+      z-index: -1;
+      opacity: 0.3;
+      filter: blur(10px);
+    }
+
+    .result-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      color: var(--neon-pink);
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+    }
+
+    .result-code {
+      font-family: 'Orbitron', monospace;
+      font-size: 2rem;
+      color: var(--neon-yellow);
+      letter-spacing: 6px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--neon-yellow);
+      margin: 16px 0;
+      text-shadow: 0 0 20px rgba(252, 238, 10, 0.6);
+      word-break: break-all;
+    }
+
+    .result-hint {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 12px;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* 消息提示 */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--panel-bg);
+      border: 1px solid var(--neon-pink);
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 0.9rem;
+      z-index: 200;
+      opacity: 0;
+      transition: all 0.4s;
+      text-align: center;
+      max-width: 90%;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    .toast.error {
+      border-color: #ff4444;
+      color: #ff6666;
+    }
+
+    /* 密码弹窗 */
+    .pwd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.9);
+      z-index: 150;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .pwd-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .pwd-box {
+      background: var(--panel-bg);
+      border: 2px solid var(--neon-pink);
+      padding: 36px 40px;
+      text-align: center;
+      max-width: 90%;
+      width: 380px;
+      position: relative;
+      box-shadow: 0 0 40px rgba(255, 0, 255, 0.2);
+    }
+
+    .pwd-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 18px; height: 18px;
+      border-top: 3px solid var(--neon-pink);
+      border-left: 3px solid var(--neon-pink);
+    }
+
+    .pwd-box::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 18px; height: 18px;
+      border-bottom: 3px solid var(--neon-pink);
+      border-right: 3px solid var(--neon-pink);
+    }
+
+    .pwd-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: var(--neon-pink);
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+    }
+
+    .pwd-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 0, 255, 0.4);
+      color: var(--neon-cyan);
+      padding: 14px 16px;
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem;
+      letter-spacing: 6px;
+      text-align: center;
+      outline: none;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .pwd-input:focus {
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+    }
+
+    .pwd-input::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+      letter-spacing: 2px;
+      font-size: 0.85rem;
+    }
+
+    .pwd-hint {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.3);
+      margin-top: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* 自定义确认弹窗 */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.92);
+      z-index: 160;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .confirm-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .confirm-box {
+      background: var(--panel-bg);
+      border: 2px solid var(--neon-cyan);
+      padding: 32px 36px;
+      text-align: center;
+      max-width: 90%;
+      width: 400px;
+      position: relative;
+    }
+
+    .confirm-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 18px; height: 18px;
+      border-top: 3px solid var(--neon-cyan);
+      border-left: 3px solid var(--neon-cyan);
+    }
+
+    .confirm-box::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 18px; height: 18px;
+      border-bottom: 3px solid var(--neon-cyan);
+      border-right: 3px solid var(--neon-cyan);
+    }
+
+    .confirm-msg {
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .confirm-msg strong {
+      color: var(--neon-yellow);
+      font-family: 'Orbitron', monospace;
+    }
+
+    .confirm-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* 已参与提示 */
+    .already-played {
+      text-align: center;
+      padding: 30px;
+    }
+
+    .already-played .big-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 15px var(--neon-pink));
+    }
+
+    .already-played h3 {
+      font-family: 'Orbitron', monospace;
+      color: var(--neon-pink);
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      letter-spacing: 3px;
+    }
+
+    .already-played .your-code {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      color: var(--neon-yellow);
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--neon-yellow);
+      display: inline-block;
+      margin-top: 12px;
+      letter-spacing: 4px;
+      text-shadow: 0 0 15px rgba(252, 238, 10, 0.5);
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .draw-wheel-container {
+        width: 220px;
+        height: 220px;
+      }
+      .result-card {
+        padding: 28px 24px;
+      }
+      .result-code {
+        font-size: 1.4rem;
+      }
+      .cyber-input-group {
+        flex-direction: column;
+      }
+      .cyber-btn {
+        width: 100%;
+      }
+    }
+
+    /* 批量导入文本域 */
+    .cyber-textarea {
+      width: 100%;
+      min-height: 100px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      color: #fff;
+      padding: 12px 16px;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    .cyber-textarea:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    }
+
+    .cyber-textarea::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* 底部 */
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 3px;
+      font-family: 'Orbitron', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="cyber-grid"></div>
+  <div class="scanlines"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="container">
+    <header>
+      <h1 class="glitch-title" data-text="CYBER DRAW">CYBER DRAW</h1>
+      <div class="subtitle">赛 博 优 惠 券 抽 奖 系 统</div>
+    </header>
+
+    <!-- 密码弹窗 -->
+    <div class="pwd-overlay" id="pwdOverlay">
+      <div class="pwd-box">
+        <div class="pwd-title">◆ 身份验证 ◆</div>
+        <input type="password" class="pwd-input" id="pwdInput" placeholder="请输入管理员密码" maxlength="20">
+        <button class="cyber-btn pink" onclick="checkPassword()" style="width:100%;">确认</button>
+      </div>
+    </div>
+
+    <!-- 自定义确认弹窗 -->
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="pwd-title" style="margin-bottom:16px;">◆ 确认操作 ◆</div>
+        <div class="confirm-msg" id="confirmMsg">确定执行此操作吗？</div>
+        <div class="confirm-btns">
+          <button class="cyber-btn pink" onclick="onConfirmCancel()" style="font-size:0.75rem;">取消</button>
+          <button class="cyber-btn" onclick="onConfirmOk()" style="font-size:0.75rem;">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 管理员面板 -->
+    <div class="admin-toggle">
+      <button onclick="toggleAdmin()">◆ 管理员入口 ◆</button>
+    </div>
+
+    <div class="admin-panel cyber-card" id="adminPanel">
+      <div class="card-inner">
+        <div class="card-title"><span class="icon">⚙</span> 优惠券管理终端</div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">5元券批量导入（每行一个编码）</label>
+          <textarea class="cyber-textarea" id="batchInput5" placeholder="COUPON001&#10;COUPON002&#10;COUPON003"></textarea>
+          <button class="cyber-btn yellow" onclick="addBatchCoupons(5)" style="font-size:0.8rem;">导入5元券</button>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">3元券批量导入（每行一个编码）</label>
+          <textarea class="cyber-textarea" id="batchInput3" placeholder="COUPON101&#10;COUPON102&#10;COUPON103"></textarea>
+          <button class="cyber-btn" onclick="addBatchCoupons(3)" style="font-size:0.8rem;">导入3元券</button>
+        </div>
+
+        <div style="margin-top: 20px; margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">单个添加</label>
+          <div class="value-select">
+            <label>
+              <input type="radio" name="singleValue" value="5" checked>
+              <span>5元券</span>
+            </label>
+            <label>
+              <input type="radio" name="singleValue" value="3">
+              <span>3元券</span>
+            </label>
+          </div>
+          <div class="cyber-input-group">
+            <input type="text" class="cyber-input" id="singleInput" placeholder="输入优惠券编码">
+            <button class="cyber-btn pink" onclick="addSingleCoupon()">添加</button>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-value" id="totalCount">0</div>
+            <div class="stat-label">总数量</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="available5" style="color: var(--neon-yellow);">0</div>
+            <div class="stat-label">5元剩余</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="available3" style="color: var(--neon-cyan);">0</div>
+            <div class="stat-label">3元剩余</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="usedCount" style="color: #ff6666;">0</div>
+            <div class="stat-label">已抽</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="userCount" style="color: var(--neon-purple);">0</div>
+            <div class="stat-label">参与人数</div>
+          </div>
+        </div>
+
+        <div class="coupon-list" id="couponList"></div>
+
+        <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="cyber-btn pink" onclick="clearAllData()" style="font-size: 0.7rem;">清空所有数据</button>
+          <button class="cyber-btn yellow" onclick="exportData()" style="font-size: 0.7rem;">导出数据</button>
+        </div>
+
+        <!-- 修改密码 -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2);">
+          <div class="card-title" style="font-size: 0.95rem; margin-bottom: 12px;"><span class="icon">🔐</span> 安全设置</div>
+          <div class="cyber-input-group" style="flex-wrap: nowrap;">
+            <input type="password" class="cyber-input" id="newPwdInput" placeholder="输入新密码" style="min-width: 0;">
+            <button class="cyber-btn pink" onclick="changeAdminPassword()" style="white-space: nowrap;">修改密码</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户抽奖区 -->
+    <div class="cyber-card">
+      <div class="card-inner">
+        <div class="card-title"><span class="icon">◈</span> 抽奖中心</div>
+
+        <div id="drawArea">
+          <div class="user-form">
+            <input type="email" class="cyber-input" id="username" placeholder="输入自己的 GPT 账号邮箱参与抽奖" maxlength="60">
+          </div>
+
+          <div class="draw-wheel-container">
+            <div class="wheel-ring"></div>
+            <div class="draw-wheel" id="drawWheel">
+              <div class="wheel-inner"></div>
+              <div class="wheel-center">
+                <img class="wheel-icon" src="logo.jpg" alt="logo">
+                <div class="wheel-text">ChatGPT</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="cyber-btn yellow draw-btn" id="drawBtn" onclick="startDraw()">
+            <span class="btn-glitch">启动抽奖</span>
+          </button>
+
+          <p style="margin-top: 16px; font-size: 0.8rem; color: rgba(255,255,255,0.4);">
+            每个邮箱仅限一次抽奖机会 | 抽中后优惠券自动失效
+          </p>
+        </div>
+
+        <div class="already-played" id="alreadyPlayed" style="display: none;">
+          <div class="big-icon">🔒</div>
+          <h3>你已参与过抽奖</h3>
+          <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">以下是抽中的优惠券</p>
+          <div id="myValue" style="font-family:'Orbitron',monospace; font-size:1.1rem; color:var(--neon-yellow); margin-top:8px; text-shadow:0 0 12px rgba(252,238,10,0.4);"></div>
+          <div class="your-code" id="myCode"></div>
+          <p style="color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 16px;">请妥善保管，每个编码仅限使用一次</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      CYBER DRAW SYSTEM v1.0 // POWERED BY NEON TECH
+    </footer>
+  </div>
+
+  <!-- 结果弹窗 -->
+    <div class="result-overlay" id="resultOverlay" onclick="closeResult(event)">
+      <div class="result-card" onclick="event.stopPropagation()">
+        <div class="result-label">◆ 抽中优惠券 ◆</div>
+        <div style="font-size: 3rem; margin: 10px 0;">🎉</div>
+        <div id="resultValue" style="font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--neon-yellow); margin-bottom:8px; text-shadow:0 0 15px rgba(252,238,10,0.5);"></div>
+        <div class="result-code" id="resultCode"></div>
+        <p class="result-hint">请截图保存，每个编码仅限使用一次</p>
+        <button class="cyber-btn" style="margin-top: 20px;" onclick="closeResult()">确认领取</button>
+      </div>
+    </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================== 数据存储 =====================
+    const STORAGE_KEY = 'cyber_draw_data_v1';
+    const USER_KEY = 'cyber_draw_user_v1';
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          // 兼容旧数据：给没有value的优惠券默认赋值为3
+          if (parsed.coupons) {
+            parsed.coupons.forEach(c => {
+              if (c.value === undefined) c.value = 3;
+            });
+          }
+          // 兼容旧记录：给没有value的记录默认赋值为3
+          if (parsed.records) {
+            parsed.records.forEach(r => {
+              if (r.value === undefined) r.value = 3;
+            });
+          }
+          return parsed;
+        }
+      } catch (e) {}
+      return { coupons: [], records: [] };
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getUserRecord() {
+      try {
+        const raw = localStorage.getItem(USER_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return null;
+    }
+
+    function setUserRecord(record) {
+      localStorage.setItem(USER_KEY, JSON.stringify(record));
+    }
+
+    let data = loadData();
+
+    // ===================== 初始化粒子 =====================
+    function initParticles() {
+      const container = document.getElementById('particles');
+      const colors = ['#00f3ff', '#ff00ff', '#bd00ff', '#fcee0a'];
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (Math.random() * 10 + 8) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.boxShadow = `0 0 6px ${p.style.background}`;
+        container.appendChild(p);
+      }
+    }
+
+    // ===================== UI 更新 =====================
+    function updateStats() {
+      const total = data.coupons.length;
+      const available5 = data.coupons.filter(c => !c.used && c.value === 5).length;
+      const available3 = data.coupons.filter(c => !c.used && c.value === 3).length;
+      const used = data.coupons.filter(c => c.used).length;
+      const users = data.records.length;
+
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('available5').textContent = available5;
+      document.getElementById('available3').textContent = available3;
+      document.getElementById('usedCount').textContent = used;
+      document.getElementById('userCount').textContent = users;
+    }
+
+    function renderCouponList() {
+      const list = document.getElementById('couponList');
+      if (data.coupons.length === 0) {
+        list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
+        return;
+      }
+      list.innerHTML = data.coupons.map((c, i) => `
+        <div class="coupon-item ${c.used ? 'used' : ''}">
+          <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${c.used ? 'used' : 'available'}">${c.used ? '已使用' : '可用'}</span></span>
+          <button class="remove-btn" onclick="removeCoupon(${i})" title="删除">×</button>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===================== 管理员功能 =====================
+    const DEFAULT_PWD = 'cyber888';
+    const PWD_STORAGE_KEY = 'cyber_draw_admin_pwd';
+
+    function getAdminPwd() {
+      return localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
+    }
+
+    let adminVisible = false;
+    let adminAuthed = false;
+
+    function toggleAdmin() {
+      if (!adminAuthed) {
+        openPwdOverlay();
+        return;
+      }
+      adminVisible = !adminVisible;
+      document.getElementById('adminPanel').classList.toggle('active', adminVisible);
+      if (adminVisible) {
+        renderCouponList();
+        updateStats();
+      }
+    }
+
+    function openPwdOverlay() {
+      document.getElementById('pwdOverlay').classList.add('active');
+      document.getElementById('pwdInput').value = '';
+      setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+    }
+
+    function closePwdOverlay() {
+      document.getElementById('pwdOverlay').classList.remove('active');
+      document.getElementById('pwdInput').value = '';
+    }
+
+    function checkPassword() {
+      const input = document.getElementById('pwdInput').value.trim();
+      if (input === getAdminPwd()) {
+        adminAuthed = true;
+        closePwdOverlay();
+        showToast('身份验证通过', 'success');
+        // 自动展开面板
+        adminVisible = true;
+        document.getElementById('adminPanel').classList.add('active');
+        renderCouponList();
+        updateStats();
+      } else {
+        showToast('密码错误，请重试', 'error');
+        document.getElementById('pwdInput').value = '';
+        document.getElementById('pwdInput').focus();
+      }
+    }
+
+    // 自定义确认弹窗
+    let confirmCallback = null;
+
+    function openConfirm(msg, onOk) {
+      document.getElementById('confirmMsg').innerHTML = msg;
+      document.getElementById('confirmOverlay').classList.add('active');
+      confirmCallback = onOk;
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmOverlay').classList.remove('active');
+      confirmCallback = null;
+    }
+
+    function onConfirmOk() {
+      if (confirmCallback) confirmCallback();
+      closeConfirm();
+    }
+
+    function onConfirmCancel() {
+      closeConfirm();
+    }
+
+    document.getElementById('confirmOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeConfirm();
+    });
+
+    function changeAdminPassword() {
+      const input = document.getElementById('newPwdInput').value.trim();
+      if (!input) {
+        showToast('请输入新密码', 'error');
+        return;
+      }
+      if (input.length < 4) {
+        showToast('密码长度至少4位', 'error');
+        return;
+      }
+      openConfirm(`确定将管理员密码修改为 <strong>${escapeHtml(input)}</strong> 吗？`, () => {
+        localStorage.setItem(PWD_STORAGE_KEY, input);
+        document.getElementById('newPwdInput').value = '';
+        showToast('密码修改成功', 'success');
+      });
+    }
+
+    // 点击遮罩关闭密码弹窗
+    document.getElementById('pwdOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closePwdOverlay();
+    });
+
+    // Enter 键提交密码
+    document.getElementById('pwdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // Enter 键修改密码
+    document.getElementById('newPwdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') changeAdminPassword();
+    });
+
+    function parseCouponLine(line) {
+      // 支持格式: "CODE 5" / "CODE,5" / "CODE，5" / "CODE  5" / "CODE"
+      const parts = line.split(/[\s,\uFF0C]+/).filter(p => p.length > 0);
+      if (parts.length === 0) return null;
+      const code = parts[0];
+      let value = 3; // 默认3元
+      if (parts.length >= 2) {
+        const parsed = parseInt(parts[1], 10);
+        if (!isNaN(parsed) && (parsed === 3 || parsed === 5)) {
+          value = parsed;
+        }
+      }
+      return { code, value };
+    }
+
+    function addBatchCoupons(value) {
+      const inputId = value === 5 ? 'batchInput5' : 'batchInput3';
+      const input = document.getElementById(inputId);
+      const lines = input.value.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) {
+        showToast('请输入至少一个优惠券编码', 'error');
+        return;
+      }
+      let added = 0;
+      lines.forEach(code => {
+        if (!data.coupons.find(c => c.code === code)) {
+          data.coupons.push({ code, value, used: false });
+          added++;
+        }
+      });
+      saveData(data);
+      input.value = '';
+      renderCouponList();
+      updateStats();
+      showToast(`成功导入 ${added} 个${value}元优惠券`, 'success');
+    }
+
+    function addSingleCoupon() {
+      const input = document.getElementById('singleInput');
+      const code = input.value.trim();
+      if (!code) {
+        showToast('请输入优惠券编码', 'error');
+        return;
+      }
+      if (data.coupons.find(c => c.code === code)) {
+        showToast('该编码已存在', 'error');
+        return;
+      }
+      const valueRadio = document.querySelector('input[name="singleValue"]:checked');
+      const value = valueRadio ? parseInt(valueRadio.value, 10) : 3;
+      data.coupons.push({ code, value, used: false });
+      saveData(data);
+      input.value = '';
+      renderCouponList();
+      updateStats();
+      showToast(`添加成功 (${value}元券)`, 'success');
+    }
+
+    function removeCoupon(index) {
+      data.coupons.splice(index, 1);
+      saveData(data);
+      renderCouponList();
+      updateStats();
+    }
+
+    function clearAllData() {
+      openConfirm('确定要<strong>清空所有数据</strong>吗？此操作不可恢复！', () => {
+        data = { coupons: [], records: [] };
+        saveData(data);
+        localStorage.removeItem(USER_KEY);
+        renderCouponList();
+        updateStats();
+        checkUserStatus();
+        showToast('所有数据已清空', 'success');
+      });
+    }
+
+    function exportData() {
+      // 先确保所有数据都有value字段
+      data.coupons.forEach(c => { if (c.value === undefined) c.value = 3; });
+      data.records.forEach(r => { if (r.value === undefined) r.value = 3; });
+      saveData(data);
+
+      const exportObj = {
+        exportTime: new Date().toLocaleString('zh-CN'),
+        coupons: data.coupons,
+        records: data.records
+      };
+      const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cyber-draw-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('数据已导出', 'success');
+    }
+
+    // ===================== 抽奖逻辑 =====================
+    let isDrawing = false;
+
+    function checkUserStatus() {
+      const record = getUserRecord();
+      if (record) {
+        document.getElementById('drawArea').style.display = 'none';
+        document.getElementById('alreadyPlayed').style.display = 'block';
+        document.getElementById('myCode').textContent = record.code;
+        document.getElementById('myValue').textContent = `◆ ${record.value || 3}元优惠券 ◆`;
+        return true;
+      }
+      document.getElementById('drawArea').style.display = 'block';
+      document.getElementById('alreadyPlayed').style.display = 'none';
+      return false;
+    }
+
+    function startDraw() {
+      if (isDrawing) return;
+
+      const username = document.getElementById('username').value.trim();
+      if (!username) {
+        showToast('请先输入你的昵称', 'error');
+        document.getElementById('username').focus();
+        return;
+      }
+
+      // 检查该昵称是否已参与
+      const existingRecord = data.records.find(r => r.username === username);
+      if (existingRecord) {
+        showToast(`昵称 "${username}" 已参与过抽奖`, 'error');
+        return;
+      }
+
+      // 检查本地存储（同一设备）
+      const localRecord = getUserRecord();
+      if (localRecord) {
+        showToast('该设备已参与过抽奖', 'error');
+        return;
+      }
+
+      const available = data.coupons.filter(c => !c.used);
+      if (available.length === 0) {
+        showToast('优惠券已被抽完，下次再来吧', 'error');
+        return;
+      }
+
+      isDrawing = true;
+      const btn = document.getElementById('drawBtn');
+      const wheel = document.getElementById('drawWheel');
+      btn.disabled = true;
+      wheel.classList.add('spinning');
+
+      // 抽奖动画延时
+      setTimeout(() => {
+        // 随机选取
+        const winnerIndex = Math.floor(Math.random() * available.length);
+        const winner = available[winnerIndex];
+
+        // 标记为已使用
+        const couponIndex = data.coupons.findIndex(c => c.code === winner.code);
+        data.coupons[couponIndex].used = true;
+
+        // 记录
+        const record = {
+          username,
+          code: winner.code,
+          value: winner.value,
+          time: new Date().toISOString()
+        };
+        data.records.push(record);
+        setUserRecord(record);
+        saveData(data);
+
+        // 停止动画
+        wheel.classList.remove('spinning');
+        isDrawing = false;
+        btn.disabled = false;
+
+        // 显示结果
+        showResult(winner.code, winner.value);
+        updateStats();
+        if (adminVisible) renderCouponList();
+
+        // 本地标记
+        checkUserStatus();
+      }, 2500);
+    }
+
+    function showResult(code, value) {
+      document.getElementById('resultCode').textContent = code;
+      document.getElementById('resultValue').textContent = `◆ ${value}元优惠券 ◆`;
+      document.getElementById('resultOverlay').classList.add('active');
+      createConfetti();
+    }
+
+    function closeResult(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('resultOverlay').classList.remove('active');
+    }
+
+    function createConfetti() {
+      const colors = ['#00f3ff', '#ff00ff', '#bd00ff', '#fcee0a', '#ff4444'];
+      const overlay = document.getElementById('resultOverlay');
+      for (let i = 0; i < 50; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        c.style.animationDelay = (Math.random() * 0.5) + 's';
+        c.style.width = (Math.random() * 6 + 4) + 'px';
+        c.style.height = (Math.random() * 6 + 4) + 'px';
+        overlay.appendChild(c);
+        setTimeout(() => c.remove(), 4000);
+      }
+    }
+
+    // ===================== 初始化 =====================
+    initParticles();
+    updateStats();
+    checkUserStatus();
+
+    // Enter键触发抽奖
+    document.getElementById('username').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') startDraw();
+    });
+    document.getElementById('singleInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addSingleCoupon();
+    });
+  </script>
+</body>
+</html>
