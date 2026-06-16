@@ -1385,8 +1385,8 @@
 
     function backToMain() {
       adminVisible = false;
+      adminAuthed = false; // 退出后重置认证状态，下次需重新输密码
       document.getElementById('adminPanel').classList.remove('active');
-      // 不再设置内联 style.display，让 CSS .admin-panel 的 display:none 生效
       // 显示所有内容
       document.querySelector('header').style.display = 'block';
       document.querySelector('.admin-toggle').style.display = 'block';
@@ -1419,6 +1419,7 @@
         const result = await apiPost('/admin/login', { password: input });
         if (result.ok) {
           adminAuthed = true;
+          localStorage.setItem(PWD_STORAGE_KEY, input); // 保存当前密码到本地，确保修改密码时能正确验证旧密码
           closePwdOverlay();
           showToast('身份验证通过', 'success');
           toggleAdmin(); // 调用 toggleAdmin 展开面板并隐藏抽奖区域
