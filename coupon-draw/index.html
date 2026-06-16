@@ -1356,8 +1356,11 @@
         return;
       }
       adminVisible = !adminVisible;
-      document.getElementById('adminPanel').classList.toggle('active', adminVisible);
+      const panel = document.getElementById('adminPanel');
+      panel.classList.toggle('active', adminVisible);
       if (adminVisible) {
+        // 清除可能存在的内联 display:none，让 CSS 类接管
+        panel.style.display = '';
         renderCouponList();
         updateStats();
         // 隐藏抽奖区域和标题，只显示管理面板
@@ -1383,7 +1386,7 @@
     function backToMain() {
       adminVisible = false;
       document.getElementById('adminPanel').classList.remove('active');
-      document.getElementById('adminPanel').style.display = 'none';
+      // 不再设置内联 style.display，让 CSS .admin-panel 的 display:none 生效
       // 显示所有内容
       document.querySelector('header').style.display = 'block';
       document.querySelector('.admin-toggle').style.display = 'block';
