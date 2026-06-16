@@ -1413,10 +1413,7 @@
           adminAuthed = true;
           closePwdOverlay();
           showToast('身份验证通过', 'success');
-          adminVisible = true;
-          document.getElementById('adminPanel').classList.add('active');
-          renderCouponList();
-          updateStats();
+          toggleAdmin(); // 调用 toggleAdmin 展开面板并隐藏抽奖区域
         } else {
           showToast('密码错误，请重试', 'error');
           document.getElementById('pwdInput').value = '';
