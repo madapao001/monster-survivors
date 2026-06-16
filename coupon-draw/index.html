@@ -1166,6 +1166,12 @@
             <button class="cyber-btn pink" onclick="changeAdminPassword()" style="white-space: nowrap;">修改密码</button>
           </div>
         </div>
+
+        <!-- 底部操作按钮 -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2); display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="cyber-btn" onclick="saveAllChanges()" style="font-size: 0.8rem; flex: 1;">💾 保存整体</button>
+          <button class="cyber-btn pink" onclick="backToMain()" style="font-size: 0.8rem; flex: 1;">↩ 返回主页面</button>
+        </div>
       </div>
     </div>
 
@@ -1354,7 +1360,38 @@
       if (adminVisible) {
         renderCouponList();
         updateStats();
+        // 隐藏抽奖区域和标题，只显示管理面板
+        document.querySelector('header').style.display = 'none';
+        document.querySelector('.admin-toggle').style.display = 'none';
+        const userCards = document.querySelectorAll('.cyber-card');
+        userCards.forEach(card => {
+          if (!card.classList.contains('admin-panel')) card.style.display = 'none';
+        });
+        document.querySelector('footer').style.display = 'none';
+      } else {
+        // 显示所有内容
+        document.querySelector('header').style.display = 'block';
+        document.querySelector('.admin-toggle').style.display = 'block';
+        const userCards = document.querySelectorAll('.cyber-card');
+        userCards.forEach(card => card.style.display = 'block');
+        document.querySelector('footer').style.display = 'block';
       }
+    }
+
+    function backToMain() {
+      adminVisible = false;
+      document.getElementById('adminPanel').classList.remove('active');
+      // 显示所有内容
+      document.querySelector('header').style.display = 'block';
+      document.querySelector('.admin-toggle').style.display = 'block';
+      const userCards = document.querySelectorAll('.cyber-card');
+      userCards.forEach(card => card.style.display = 'block');
+      document.querySelector('footer').style.display = 'block';
+      checkUserStatus();
+    }
+
+    function saveAllChanges() {
+      showToast('所有操作已实时同步到云端，无需手动保存', 'success');
     }
 
     function openPwdOverlay() {
