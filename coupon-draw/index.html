@@ -1369,11 +1369,13 @@
         });
         document.querySelector('footer').style.display = 'none';
       } else {
-        // 显示所有内容
+        // 显示所有内容（除了管理员面板）
         document.querySelector('header').style.display = 'block';
         document.querySelector('.admin-toggle').style.display = 'block';
         const userCards = document.querySelectorAll('.cyber-card');
-        userCards.forEach(card => card.style.display = 'block');
+        userCards.forEach(card => {
+          if (!card.classList.contains('admin-panel')) card.style.display = 'block';
+        });
         document.querySelector('footer').style.display = 'block';
       }
     }
@@ -1381,11 +1383,14 @@
     function backToMain() {
       adminVisible = false;
       document.getElementById('adminPanel').classList.remove('active');
+      document.getElementById('adminPanel').style.display = 'none';
       // 显示所有内容
       document.querySelector('header').style.display = 'block';
       document.querySelector('.admin-toggle').style.display = 'block';
       const userCards = document.querySelectorAll('.cyber-card');
-      userCards.forEach(card => card.style.display = 'block');
+      userCards.forEach(card => {
+        if (!card.classList.contains('admin-panel')) card.style.display = 'block';
+      });
       document.querySelector('footer').style.display = 'block';
       checkUserStatus();
     }
