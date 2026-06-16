@@ -1231,35 +1231,31 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ===================== 数据存储 =====================
-    const STORAGE_KEY = 'cyber_draw_data_v1';
+    // ===================== API 配置 =====================
+    const API_BASE = 'https://cloud1-6gq4zu91459b85b9.service.tcloudbase.com/coupon-draw-api';
     const USER_KEY = 'cyber_draw_user_v1';
 
-    function loadData() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          // 兼容旧数据：给没有value的优惠券默认赋值为3
-          if (parsed.coupons) {
-            parsed.coupons.forEach(c => {
-              if (c.value === undefined) c.value = 3;
-            });
-          }
-          // 兼容旧记录：给没有value的记录默认赋值为3
-          if (parsed.records) {
-            parsed.records.forEach(r => {
-              if (r.value === undefined) r.value = 3;
-            });
-          }
-          return parsed;
-        }
-      } catch (e) {}
-      return { coupons: [], records: [] };
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path);
+      return res.json();
     }
 
-    function saveData(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return res.json();
+    }
+
+    async function apiDelete(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return res.json();
     }
 
     function getUserRecord() {
@@ -1273,8 +1269,6 @@
     function setUserRecord(record) {
       localStorage.setItem(USER_KEY, JSON.stringify(record));
     }
-
-    let data = loadData();
 
     // ===================== 初始化粒子 =====================
     function initParticles() {
@@ -1293,32 +1287,37 @@
     }
 
     // ===================== UI 更新 =====================
-    function updateStats() {
-      const total = data.coupons.length;
-      const available5 = data.coupons.filter(c => !c.used && c.value === 5).length;
-      const available3 = data.coupons.filter(c => !c.used && c.value === 3).length;
-      const used = data.coupons.filter(c => c.used).length;
-      const users = data.records.length;
-
-      document.getElementById('totalCount').textContent = total;
-      document.getElementById('available5').textContent = available5;
-      document.getElementById('available3').textContent = available3;
-      document.getElementById('usedCount').textContent = used;
-      document.getElementById('userCount').textContent = users;
+    async function updateStats() {
+      try {
+        const stats = await apiGet('/stats');
+        document.getElementById('totalCount').textContent = stats.total;
+        document.getElementById('available5').textContent = stats.available5;
+        document.getElementById('available3').textContent = stats.available3;
+        document.getElementById('usedCount').textContent = stats.used;
+        document.getElementById('userCount').textContent = stats.userCount;
+      } catch (e) {
+        console.error('获取统计失败', e);
+      }
     }
 
-    function renderCouponList() {
+    async function renderCouponList() {
       const list = document.getElementById('couponList');
-      if (data.coupons.length === 0) {
-        list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
-        return;
+      try {
+        const result = await apiGet('/coupons');
+        const coupons = result.coupons || [];
+        if (coupons.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
+          return;
+        }
+        list.innerHTML = coupons.map((c, i) => `
+          <div class="coupon-item ${c.used ? 'used' : ''}">
+            <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${c.used ? 'used' : 'available'}">${c.used ? '已使用' : '可用'}</span></span>
+            <button class="remove-btn" onclick="removeCoupon('${c._id}')" title="删除">×</button>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('获取优惠券列表失败', e);
       }
-      list.innerHTML = data.coupons.map((c, i) => `
-        <div class="coupon-item ${c.used ? 'used' : ''}">
-          <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${c.used ? 'used' : 'available'}">${c.used ? '已使用' : '可用'}</span></span>
-          <button class="remove-btn" onclick="removeCoupon(${i})" title="删除">×</button>
-        </div>
-      `).join('');
     }
 
     function escapeHtml(text) {
@@ -1369,21 +1368,25 @@
       document.getElementById('pwdInput').value = '';
     }
 
-    function checkPassword() {
+    async function checkPassword() {
       const input = document.getElementById('pwdInput').value.trim();
-      if (input === getAdminPwd()) {
-        adminAuthed = true;
-        closePwdOverlay();
-        showToast('身份验证通过', 'success');
-        // 自动展开面板
-        adminVisible = true;
-        document.getElementById('adminPanel').classList.add('active');
-        renderCouponList();
-        updateStats();
-      } else {
-        showToast('密码错误，请重试', 'error');
-        document.getElementById('pwdInput').value = '';
-        document.getElementById('pwdInput').focus();
+      try {
+        const result = await apiPost('/admin/login', { password: input });
+        if (result.ok) {
+          adminAuthed = true;
+          closePwdOverlay();
+          showToast('身份验证通过', 'success');
+          adminVisible = true;
+          document.getElementById('adminPanel').classList.add('active');
+          renderCouponList();
+          updateStats();
+        } else {
+          showToast('密码错误，请重试', 'error');
+          document.getElementById('pwdInput').value = '';
+          document.getElementById('pwdInput').focus();
+        }
+      } catch (e) {
+        showToast('验证失败，请稍后重试', 'error');
       }
     }
 
@@ -1414,7 +1417,7 @@
       if (e.target === e.currentTarget) closeConfirm();
     });
 
-    function changeAdminPassword() {
+    async function changeAdminPassword() {
       const input = document.getElementById('newPwdInput').value.trim();
       if (!input) {
         showToast('请输入新密码', 'error');
@@ -1424,10 +1427,20 @@
         showToast('密码长度至少4位', 'error');
         return;
       }
-      openConfirm(`确定将管理员密码修改为 <strong>${escapeHtml(input)}</strong> 吗？`, () => {
-        localStorage.setItem(PWD_STORAGE_KEY, input);
-        document.getElementById('newPwdInput').value = '';
-        showToast('密码修改成功', 'success');
+      openConfirm(`确定将管理员密码修改为 <strong>${escapeHtml(input)}</strong> 吗？`, async () => {
+        try {
+          const oldPwd = localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
+          const result = await apiPost('/admin/password', { oldPassword: oldPwd, newPassword: input });
+          if (result.ok) {
+            localStorage.setItem(PWD_STORAGE_KEY, input);
+            document.getElementById('newPwdInput').value = '';
+            showToast('密码修改成功', 'success');
+          } else {
+            showToast(result.message || '修改失败', 'error');
+          }
+        } catch (e) {
+          showToast('修改失败，请稍后重试', 'error');
+        }
       });
     }
 
@@ -1446,22 +1459,7 @@
       if (e.key === 'Enter') changeAdminPassword();
     });
 
-    function parseCouponLine(line) {
-      // 支持格式: "CODE 5" / "CODE,5" / "CODE，5" / "CODE  5" / "CODE"
-      const parts = line.split(/[\s,\uFF0C]+/).filter(p => p.length > 0);
-      if (parts.length === 0) return null;
-      const code = parts[0];
-      let value = 3; // 默认3元
-      if (parts.length >= 2) {
-        const parsed = parseInt(parts[1], 10);
-        if (!isNaN(parsed) && (parsed === 3 || parsed === 5)) {
-          value = parsed;
-        }
-      }
-      return { code, value };
-    }
-
-    function addBatchCoupons(value) {
+    async function addBatchCoupons(value) {
       const inputId = value === 5 ? 'batchInput5' : 'batchInput3';
       const input = document.getElementById(inputId);
       const lines = input.value.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
@@ -1469,91 +1467,102 @@
         showToast('请输入至少一个优惠券编码', 'error');
         return;
       }
-      let added = 0;
-      lines.forEach(code => {
-        if (!data.coupons.find(c => c.code === code)) {
-          data.coupons.push({ code, value, used: false });
-          added++;
+      try {
+        const result = await apiPost('/coupons', { codes: lines, value });
+        if (result.error) {
+          showToast(result.error, 'error');
+        } else {
+          input.value = '';
+          renderCouponList();
+          updateStats();
+          showToast(result.message || `成功导入 ${result.added} 个优惠券`, 'success');
         }
-      });
-      saveData(data);
-      input.value = '';
-      renderCouponList();
-      updateStats();
-      showToast(`成功导入 ${added} 个${value}元优惠券`, 'success');
+      } catch (e) {
+        showToast('导入失败，请稍后重试', 'error');
+      }
     }
 
-    function addSingleCoupon() {
+    async function addSingleCoupon() {
       const input = document.getElementById('singleInput');
       const code = input.value.trim();
       if (!code) {
         showToast('请输入优惠券编码', 'error');
         return;
       }
-      if (data.coupons.find(c => c.code === code)) {
-        showToast('该编码已存在', 'error');
-        return;
-      }
       const valueRadio = document.querySelector('input[name="singleValue"]:checked');
       const value = valueRadio ? parseInt(valueRadio.value, 10) : 3;
-      data.coupons.push({ code, value, used: false });
-      saveData(data);
-      input.value = '';
-      renderCouponList();
-      updateStats();
-      showToast(`添加成功 (${value}元券)`, 'success');
+      try {
+        const result = await apiPost('/coupons', { codes: [code], value });
+        if (result.added > 0) {
+          input.value = '';
+          renderCouponList();
+          updateStats();
+          showToast(`添加成功 (${value}元券)`, 'success');
+        } else {
+          showToast('该编码已存在', 'error');
+        }
+      } catch (e) {
+        showToast('添加失败，请稍后重试', 'error');
+      }
     }
 
-    function removeCoupon(index) {
-      data.coupons.splice(index, 1);
-      saveData(data);
-      renderCouponList();
-      updateStats();
-    }
-
-    function clearAllData() {
-      openConfirm('确定要<strong>清空所有数据</strong>吗？此操作不可恢复！', () => {
-        data = { coupons: [], records: [] };
-        saveData(data);
-        localStorage.removeItem(USER_KEY);
+    async function removeCoupon(id) {
+      try {
+        await apiDelete('/coupons', { id });
         renderCouponList();
         updateStats();
-        checkUserStatus();
-        showToast('所有数据已清空', 'success');
+      } catch (e) {
+        showToast('删除失败', 'error');
+      }
+    }
+
+    async function clearAllData() {
+      openConfirm('确定要<strong>清空所有数据</strong>吗？此操作不可恢复！', async () => {
+        try {
+          await apiDelete('/all');
+          localStorage.removeItem(USER_KEY);
+          renderCouponList();
+          updateStats();
+          checkUserStatus();
+          showToast('所有数据已清空', 'success');
+        } catch (e) {
+          showToast('清空失败', 'error');
+        }
       });
     }
 
-    function exportData() {
-      // 先确保所有数据都有value字段
-      data.coupons.forEach(c => { if (c.value === undefined) c.value = 3; });
-      data.records.forEach(r => { if (r.value === undefined) r.value = 3; });
-      saveData(data);
-
-      const exportObj = {
-        exportTime: new Date().toLocaleString('zh-CN'),
-        coupons: data.coupons,
-        records: data.records
-      };
-      const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cyber-draw-backup-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('数据已导出', 'success');
+    async function exportData() {
+      try {
+        const couponsRes = await apiGet('/coupons');
+        const recordsRes = await apiGet('/records');
+        const exportObj = {
+          exportTime: new Date().toLocaleString('zh-CN'),
+          coupons: couponsRes.coupons || [],
+          records: recordsRes.records || []
+        };
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cyber-draw-backup-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('数据已导出', 'success');
+      } catch (e) {
+        showToast('导出失败', 'error');
+      }
     }
 
     // ===================== 抽奖逻辑 =====================
     let isDrawing = false;
 
-    function checkUserStatus() {
-      const record = getUserRecord();
-      if (record) {
+    async function checkUserStatus() {
+      const localRecord = getUserRecord();
+      if (localRecord) {
         document.getElementById('drawArea').style.display = 'none';
         document.getElementById('alreadyPlayed').style.display = 'block';
-        document.getElementById('myCode').textContent = record.code;
-        document.getElementById('myValue').textContent = `◆ ${record.value || 3}元优惠券 ◆`;
+        document.getElementById('myCode').textContent = localRecord.code;
+        document.getElementById('myValue').textContent = `◆ ${localRecord.value || 3}元优惠券 ◆`;
         return true;
       }
       document.getElementById('drawArea').style.display = 'block';
@@ -1561,20 +1570,13 @@
       return false;
     }
 
-    function startDraw() {
+    async function startDraw() {
       if (isDrawing) return;
 
       const username = document.getElementById('username').value.trim();
       if (!username) {
-        showToast('请先输入你的昵称', 'error');
+        showToast('请先输入你的邮箱', 'error');
         document.getElementById('username').focus();
-        return;
-      }
-
-      // 检查该昵称是否已参与
-      const existingRecord = data.records.find(r => r.username === username);
-      if (existingRecord) {
-        showToast(`昵称 "${username}" 已参与过抽奖`, 'error');
         return;
       }
 
@@ -1585,52 +1587,49 @@
         return;
       }
 
-      const available = data.coupons.filter(c => !c.used);
-      if (available.length === 0) {
-        showToast('优惠券已被抽完，下次再来吧', 'error');
-        return;
-      }
-
       isDrawing = true;
       const btn = document.getElementById('drawBtn');
       const wheel = document.getElementById('drawWheel');
       btn.disabled = true;
       wheel.classList.add('spinning');
 
-      // 抽奖动画延时
-      setTimeout(() => {
-        // 随机选取
-        const winnerIndex = Math.floor(Math.random() * available.length);
-        const winner = available[winnerIndex];
-
-        // 标记为已使用
-        const couponIndex = data.coupons.findIndex(c => c.code === winner.code);
-        data.coupons[couponIndex].used = true;
-
-        // 记录
-        const record = {
-          username,
-          code: winner.code,
-          value: winner.value,
-          time: new Date().toISOString()
-        };
-        data.records.push(record);
-        setUserRecord(record);
-        saveData(data);
+      try {
+        const result = await apiPost('/draw', { username });
 
         // 停止动画
         wheel.classList.remove('spinning');
         isDrawing = false;
         btn.disabled = false;
 
-        // 显示结果
-        showResult(winner.code, winner.value);
-        updateStats();
-        if (adminVisible) renderCouponList();
+        if (result.error === 'already_played') {
+          showToast('该邮箱已参与过抽奖', 'error');
+          if (result.record) {
+            setUserRecord(result.record);
+            checkUserStatus();
+          }
+          return;
+        }
 
-        // 本地标记
-        checkUserStatus();
-      }, 2500);
+        if (result.error === 'empty') {
+          showToast('优惠券已被抽完，下次再来吧', 'error');
+          return;
+        }
+
+        if (result.ok) {
+          setUserRecord({ code: result.code, value: result.value });
+          showResult(result.code, result.value);
+          updateStats();
+          if (adminVisible) renderCouponList();
+          checkUserStatus();
+        } else {
+          showToast(result.message || '抽奖失败', 'error');
+        }
+      } catch (e) {
+        wheel.classList.remove('spinning');
+        isDrawing = false;
+        btn.disabled = false;
+        showToast('网络错误，请稍后重试', 'error');
+      }
     }
 
     function showResult(code, value) {
