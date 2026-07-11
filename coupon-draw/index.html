@@ -1089,6 +1089,19 @@
       </div>
     </div>
 
+    <!-- 抽奖记录弹窗 -->
+    <div class="confirm-overlay" id="recordOverlay">
+      <div class="confirm-box" style="max-width: 420px;">
+        <div class="pwd-title" style="margin-bottom: 16px;">◆ 我的抽奖记录 ◆</div>
+        <div id="recordContent">
+          <!-- JS populated -->
+        </div>
+        <div class="confirm-btns" style="margin-top: 20px;">
+          <button class="cyber-btn pink" onclick="closeRecordModal()" style="font-size: 0.8rem;">关闭</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 管理员面板 -->
     <div class="admin-toggle">
       <button onclick="toggleAdmin()">◆ 管理员入口 ◆</button>
@@ -1200,7 +1213,7 @@
             <button class="cyber-btn yellow draw-btn" id="drawBtn" onclick="startDraw()">
               <span class="btn-glitch">启动抽奖</span>
             </button>
-            <button class="cyber-btn" style="font-size: 0.85rem; padding: 12px 24px;" onclick="window.location.href='records.html'">
+            <button class="cyber-btn" style="font-size: 0.85rem; padding: 12px 24px;" onclick="showRecordModal()">
               <span>📋 查看抽奖记录</span>
             </button>
           </div>
