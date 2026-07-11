@@ -1210,15 +1210,7 @@
           </p>
         </div>
 
-        <div class="already-played" id="alreadyPlayed" style="display: none;">
-          <div class="big-icon">🔒</div>
-          <h3>你已参与过抽奖</h3>
-          <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">以下是抽中的优惠券</p>
-          <div id="myValue" style="font-family:'Orbitron',monospace; font-size:1.1rem; color:var(--neon-yellow); margin-top:8px; text-shadow:0 0 12px rgba(252,238,10,0.4);"></div>
-          <div class="your-code" id="myCode"></div>
-          <p style="color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 16px;">请妥善保管，每个编码仅限使用一次</p>
-          <button class="cyber-btn" style="margin-top: 16px;" onclick="resetToDraw()">返回主页面</button>
-        </div>
+
       </div>
     </div>
 
@@ -1401,8 +1393,6 @@
     }
 
     function resetToDraw() {
-      document.getElementById('alreadyPlayed').style.display = 'none';
-      document.getElementById('drawArea').style.display = 'block';
       document.getElementById('username').value = '';
       document.getElementById('username').focus();
     }
