@@ -1670,7 +1670,7 @@
         if (result.error === 'already_played') {
           showToast('该邮箱已参与过抽奖', 'error');
           if (result.record) {
-            setUserRecord(result.record);
+            setUserRecord({ code: result.record.code, value: result.record.value, time: result.record.time || new Date().toISOString() });
             checkUserStatus();
 
           }
@@ -1683,7 +1683,7 @@
         }
 
         if (result.ok) {
-          setUserRecord({ code: result.code, value: result.value });
+          setUserRecord({ code: result.code, value: result.value, time: new Date().toISOString() });
           showResult(result.code, result.value);
           updateStats();
           if (adminVisible) renderCouponList();
