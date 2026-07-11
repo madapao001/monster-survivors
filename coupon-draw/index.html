@@ -1700,6 +1700,22 @@
       }
     }
 
+    function showRecordModal() {
+      const record = getUserRecord();
+      const container = document.getElementById('recordContent');
+      if (!record) {
+        container.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0;">📭 暂无抽奖记录<br><span style="font-size: 0.75rem; color: rgba(255,255,255,0.3);">本月还没有参与抽奖，快去试试吧！</span></p>';
+      } else {
+        const time = record.time ? new Date(record.time).toLocaleString('zh-CN') : '未知时间';
+        container.innerHTML = '<div style="background: rgba(0,243,255,0.05); border: 1px solid rgba(0,243,255,0.2); border-radius: 8px; padding: 20px; text-align: center;"><div style="font-family: Orbitron, monospace; font-size: 1.3rem; color: var(--neon-yellow); text-shadow: 0 0 12px rgba(252,238,10,0.4); margin-bottom: 12px;">◆ ' + (record.value || 3) + '元优惠券 ◆</div><div style="font-family: Orbitron, monospace; font-size: 1.1rem; color: var(--neon-cyan); letter-spacing: 2px; background: rgba(0,0,0,0.3); padding: 10px 16px; border-radius: 4px; word-break: break-all;">' + record.code + '</div><div style="color: rgba(255,255,255,0.4); font-size: 0.8rem; margin-top: 16px;">抽奖时间：' + time + '</div><p style="color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 12px;">请妥善保管，每个编码仅限使用一次</p></div>';
+      }
+      document.getElementById('recordOverlay').classList.add('active');
+    }
+
+    function closeRecordModal() {
+      document.getElementById('recordOverlay').classList.remove('active');
+    }
+
     function showResult(code, value) {
       document.getElementById('resultCode').textContent = code;
       document.getElementById('resultValue').textContent = `◆ ${value}元优惠券 ◆`;
