@@ -1177,10 +1177,11 @@
 
     <!-- 用户抽奖区 -->
     <div class="cyber-card">
-      <div class="card-inner">
-        <div class="card-title"><span class="icon">◈</span> 抽奖中心</div>
+      <div class="card-inner" style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start;">
+        <div style="flex: 1; min-width: 280px;">
+          <div class="card-title"><span class="icon">◈</span> 抽奖中心</div>
 
-        <div id="drawArea">
+          <div id="drawArea">
           <div class="user-form">
             <input type="email" class="cyber-input" id="username" placeholder="输入自己的 GPT 账号邮箱参与抽奖" maxlength="60">
           </div>
@@ -1214,6 +1215,16 @@
           <p style="color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 16px;">请妥善保管，每个编码仅限使用一次</p>
           <button class="cyber-btn" style="margin-top: 16px;" onclick="resetToDraw()">返回主页面</button>
         </div>
+        </div>
+
+        <!-- 抽奖记录 -->
+        <div style="flex: 1; min-width: 280px;">
+          <div class="card-title"><span class="icon">◈</span> 我的抽奖记录</div>
+          <div id="userRecords" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+            <p style="color: rgba(255,255,255,0.4);">暂无记录</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1395,6 +1406,16 @@
       }
     }
 
+    function renderUserRecords() {
+      const container = document.getElementById('userRecords');
+      const record = getUserRecord();
+      if (!record) {
+        container.innerHTML = '<p style="color: rgba(255,255,255,0.4);">暂无记录</p>';
+        return;
+      }
+      container.innerHTML = ;
+    }
+
     function resetToDraw() {
       document.getElementById('alreadyPlayed').style.display = 'none';
       document.getElementById('drawArea').style.display = 'block';
@@ -1415,6 +1436,7 @@
       });
       document.querySelector('footer').style.display = 'block';
       checkUserStatus();
+    renderUserRecords();
     }
 
     function saveAllChanges() {
@@ -1586,6 +1608,7 @@
           renderCouponList();
           updateStats();
           checkUserStatus();
+    renderUserRecords();
           showToast('所有数据已清空', 'success');
         } catch (e) {
           showToast('清空失败', 'error');
@@ -1668,6 +1691,7 @@
           if (result.record) {
             setUserRecord(result.record);
             checkUserStatus();
+    renderUserRecords();
           }
           return;
         }
@@ -1683,6 +1707,7 @@
           updateStats();
           if (adminVisible) renderCouponList();
           checkUserStatus();
+    renderUserRecords();
         } else {
           showToast(result.message || '抽奖失败', 'error');
         }
@@ -1727,6 +1752,7 @@
     initParticles();
     updateStats();
     checkUserStatus();
+    renderUserRecords();
 
     // Enter键触发抽奖
     document.getElementById('username').addEventListener('keypress', (e) => {
