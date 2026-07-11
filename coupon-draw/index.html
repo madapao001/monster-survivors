@@ -1618,14 +1618,8 @@
     async function checkUserStatus() {
       const localRecord = getUserRecord();
       if (localRecord) {
-        document.getElementById('drawArea').style.display = 'none';
-        document.getElementById('alreadyPlayed').style.display = 'block';
-        document.getElementById('myCode').textContent = localRecord.code;
-        document.getElementById('myValue').textContent = `◆ ${localRecord.value || 3}元优惠券 ◆`;
         return true;
       }
-      document.getElementById('drawArea').style.display = 'block';
-      document.getElementById('alreadyPlayed').style.display = 'none';
       return false;
     }
 
