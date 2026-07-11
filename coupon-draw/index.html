@@ -1218,10 +1218,16 @@
         </div>
 
         <!-- 抽奖记录 -->
-        <div style="flex: 1; min-width: 280px;">
-          <div class="card-title"><span class="icon">◈</span> 我的抽奖记录</div>
-          <div id="userRecords" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-            <p style="color: rgba(255,255,255,0.4);">暂无记录</p>
+        <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div id="recordBtnArea">
+            <button class="cyber-btn" onclick="toggleRecordPanel()" style="font-size: 0.9rem;">📋 查看我的抽奖记录</button>
+          </div>
+          <div id="recordPanel" style="display: none; width: 100%;">
+            <div class="card-title"><span class="icon">◈</span> 我的抽奖记录</div>
+            <div id="userRecords" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+              <p style="color: rgba(255,255,255,0.4);">暂无记录</p>
+            </div>
+            <button class="cyber-btn pink" onclick="toggleRecordPanel()" style="margin-top: 16px; font-size: 0.8rem;">↩ 收起记录</button>
           </div>
         </div>
 
@@ -1403,6 +1409,19 @@
           if (!card.classList.contains('admin-panel')) card.style.display = 'block';
         });
         document.querySelector('footer').style.display = 'block';
+      }
+    }
+
+    function toggleRecordPanel() {
+      const btnArea = document.getElementById('recordBtnArea');
+      const panel = document.getElementById('recordPanel');
+      if (panel.style.display === 'none') {
+        btnArea.style.display = 'none';
+        panel.style.display = 'block';
+        renderUserRecords();
+      } else {
+        panel.style.display = 'none';
+        btnArea.style.display = 'block';
       }
     }
 
