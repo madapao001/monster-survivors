@@ -236,39 +236,7 @@
       font-size: 1.3rem;
     }
 
-    /* 管理员区域 */
-    .admin-toggle {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .admin-toggle button {
-      background: transparent;
-      border: 1px solid rgba(255, 0, 255, 0.4);
-      color: var(--neon-pink);
-      padding: 8px 20px;
-      font-family: 'Orbitron', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .admin-toggle button:hover {
-      background: rgba(255, 0, 255, 0.15);
-      border-color: var(--neon-pink);
-      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
-    }
-
-    .admin-panel {
-      display: none;
-    }
-
-    .admin-panel.active {
-      display: block;
-    }
-
-    /* 输入框 */
+/* 输入框 */
     .cyber-input-group {
       display: flex;
       gap: 12px;
@@ -1068,16 +1036,7 @@
       <div class="subtitle">赛 博 优 惠 券 抽 奖 系 统</div>
     </header>
 
-    <!-- 密码弹窗 -->
-    <div class="pwd-overlay" id="pwdOverlay">
-      <div class="pwd-box">
-        <div class="pwd-title">◆ 身份验证 ◆</div>
-        <input type="password" class="pwd-input" id="pwdInput" placeholder="请输入管理员密码" maxlength="20">
-        <button class="cyber-btn pink" onclick="checkPassword()" style="width:100%;">确认</button>
-      </div>
-    </div>
-
-    <!-- 自定义确认弹窗 -->
+<!-- 自定义确认弹窗 -->
     <div class="confirm-overlay" id="confirmOverlay">
       <div class="confirm-box">
         <div class="pwd-title" style="margin-bottom:16px;">◆ 确认操作 ◆</div>
@@ -1102,93 +1061,7 @@
       </div>
     </div>
 
-    <!-- 管理员面板 -->
-    <div class="admin-toggle">
-      <button onclick="toggleAdmin()">◆ 管理员入口 ◆</button>
-    </div>
-
-    <div class="admin-panel cyber-card" id="adminPanel">
-      <div class="card-inner">
-        <div class="card-title"><span class="icon">⚙</span> 优惠券管理终端</div>
-
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">5元券批量导入（每行一个编码）</label>
-          <textarea class="cyber-textarea" id="batchInput5" placeholder="COUPON001&#10;COUPON002&#10;COUPON003"></textarea>
-          <button class="cyber-btn yellow" onclick="addBatchCoupons(5)" style="font-size:0.8rem;">导入5元券</button>
-        </div>
-
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">3元券批量导入（每行一个编码）</label>
-          <textarea class="cyber-textarea" id="batchInput3" placeholder="COUPON101&#10;COUPON102&#10;COUPON103"></textarea>
-          <button class="cyber-btn" onclick="addBatchCoupons(3)" style="font-size:0.8rem;">导入3元券</button>
-        </div>
-
-        <div style="margin-top: 20px; margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">单个添加</label>
-          <div class="value-select">
-            <label>
-              <input type="radio" name="singleValue" value="5" checked>
-              <span>5元券</span>
-            </label>
-            <label>
-              <input type="radio" name="singleValue" value="3">
-              <span>3元券</span>
-            </label>
-          </div>
-          <div class="cyber-input-group">
-            <input type="text" class="cyber-input" id="singleInput" placeholder="输入优惠券编码">
-            <button class="cyber-btn pink" onclick="addSingleCoupon()">添加</button>
-          </div>
-        </div>
-
-        <div class="stats-bar">
-          <div class="stat-item">
-            <div class="stat-value" id="totalCount">0</div>
-            <div class="stat-label">总数量</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="available5" style="color: var(--neon-yellow);">0</div>
-            <div class="stat-label">5元剩余</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="available3" style="color: var(--neon-cyan);">0</div>
-            <div class="stat-label">3元剩余</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="usedCount" style="color: #ff6666;">0</div>
-            <div class="stat-label">已抽</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="userCount" style="color: var(--neon-purple);">0</div>
-            <div class="stat-label">参与人数</div>
-          </div>
-        </div>
-
-        <div class="coupon-list" id="couponList"></div>
-
-        <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="cyber-btn pink" onclick="clearAllData()" style="font-size: 0.7rem;">清空所有数据</button>
-          <button class="cyber-btn yellow" onclick="exportData()" style="font-size: 0.7rem;">导出数据</button>
-        </div>
-
-        <!-- 修改密码 -->
-        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2);">
-          <div class="card-title" style="font-size: 0.95rem; margin-bottom: 12px;"><span class="icon">🔐</span> 安全设置</div>
-          <div class="cyber-input-group" style="flex-wrap: nowrap;">
-            <input type="password" class="cyber-input" id="newPwdInput" placeholder="输入新密码" style="min-width: 0;">
-            <button class="cyber-btn pink" onclick="changeAdminPassword()" style="white-space: nowrap;">修改密码</button>
-          </div>
-        </div>
-
-        <!-- 底部操作按钮 -->
-        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2); display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="cyber-btn" onclick="saveAllChanges()" style="font-size: 0.8rem; flex: 1;">💾 保存整体</button>
-          <button class="cyber-btn pink" onclick="backToMain()" style="font-size: 0.8rem; flex: 1;">↩ 返回主页面</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 用户抽奖区 -->
+<!-- 用户抽奖区 -->
     <div class="cyber-card">
       <div class="card-inner">
         <div class="card-title"><span class="icon">◈</span> 抽奖中心</div>
