@@ -1550,24 +1550,25 @@
     async function addBatchCoupons(value) {
       const inputId = value === 5 ? 'batchInput5' : 'batchInput3';
       const input = document.getElementById(inputId);
-      const lines = input.value.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const lines = input.value.split(/
+/).map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length === 0) {
         showToast('请输入至少一个优惠券编码', 'error');
         return;
       }
-      try {
-        const result = await apiPost('/coupons', { codes: lines, value });
-        if (result.error) {
-          showToast(result.error, 'error');
-        } else {
-          input.value = '';
-          renderCouponList();
-          updateStats();
-          showToast(result.message || `成功导入 ${result.added} 个优惠券`, 'success');
+      const custom = getCustomCoupons();
+      let added = 0;
+      for (const code of lines) {
+        if (!custom.some(c => c.code === code) && !DEFAULT_COUPONS.some(c => c.code === code)) {
+          custom.push({ code, value });
+          added++;
         }
-      } catch (e) {
-        showToast('导入失败，请稍后重试', 'error');
       }
+      setCustomCoupons(custom);
+      input.value = '';
+      renderCouponList();
+      updateStats();
+      showToast(, 'success');
     }
 
     async function addSingleCoupon() {
