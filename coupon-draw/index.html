@@ -1248,31 +1248,65 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ===================== API 配置 =====================
-    const API_BASE = 'https://coupon-draw-api.your-account.workers.dev'; // 部署后替换为实际 Workers URL
+    // ===================== 优惠券池（纯前端）=====================
     const USER_KEY = 'cyber_draw_user_v1';
+    const USED_KEY = 'cyber_draw_used_v1';
+    const CUSTOM_COUPONS_KEY = 'cyber_draw_custom_v1';
 
-    async function apiGet(path) {
-      const res = await fetch(API_BASE + path);
-      return res.json();
+    // ====== 默认优惠券编码（可修改）======
+    const DEFAULT_COUPONS = [
+      { code: 'CYBER5A001', value: 5 },
+      { code: 'CYBER5A002', value: 5 },
+      { code: 'CYBER5A003', value: 5 },
+      { code: 'CYBER5A004', value: 5 },
+      { code: 'CYBER5A005', value: 5 },
+      { code: 'CYBER3B001', value: 3 },
+      { code: 'CYBER3B002', value: 3 },
+      { code: 'CYBER3B003', value: 3 },
+      { code: 'CYBER3B004', value: 3 },
+      { code: 'CYBER3B005', value: 3 },
+    ];
+    // ====================================
+
+    function getCustomCoupons() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_COUPONS_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return [];
     }
 
-    async function apiPost(path, body) {
-      const res = await fetch(API_BASE + path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      return res.json();
+    function setCustomCoupons(coupons) {
+      localStorage.setItem(CUSTOM_COUPONS_KEY, JSON.stringify(coupons));
     }
 
-    async function apiDelete(path, body) {
-      const res = await fetch(API_BASE + path, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      return res.json();
+    function getAllCoupons() {
+      return [...DEFAULT_COUPONS, ...getCustomCoupons()];
+    }
+
+    function getUsedCodes() {
+      try {
+        const raw = localStorage.getItem(USED_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return [];
+    }
+
+    function setUsedCodes(codes) {
+      localStorage.setItem(USED_KEY, JSON.stringify(codes));
+    }
+
+    function getAvailableCoupons() {
+      const used = getUsedCodes();
+      return getAllCoupons().filter(c => !used.includes(c.code));
+    }
+
+    function markCodeUsed(code) {
+      const used = getUsedCodes();
+      if (!used.includes(code)) {
+        used.push(code);
+        setUsedCodes(used);
+      }
     }
 
     function getUserRecord() {
@@ -1315,37 +1349,34 @@
     }
 
     // ===================== UI 更新 =====================
-    async function updateStats() {
-      try {
-        const stats = await apiGet('/stats');
-        document.getElementById('totalCount').textContent = stats.total;
-        document.getElementById('available5').textContent = stats.available5;
-        document.getElementById('available3').textContent = stats.available3;
-        document.getElementById('usedCount').textContent = stats.used;
-        document.getElementById('userCount').textContent = stats.userCount;
-      } catch (e) {
-        console.error('获取统计失败', e);
-      }
+    function updateStats() {
+      const all = getAllCoupons();
+      const available = getAvailableCoupons();
+      const used = getUsedCodes().length;
+      document.getElementById('totalCount').textContent = all.length;
+      document.getElementById('available5').textContent = available.filter(c => c.value === 5).length;
+      document.getElementById('available3').textContent = available.filter(c => c.value === 3).length;
+      document.getElementById('usedCount').textContent = used;
+      document.getElementById('userCount').textContent = used;
     }
 
-    async function renderCouponList() {
+    function renderCouponList() {
       const list = document.getElementById('couponList');
-      try {
-        const result = await apiGet('/coupons');
-        const coupons = result.coupons || [];
-        if (coupons.length === 0) {
-          list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
-          return;
-        }
-        list.innerHTML = coupons.map((c, i) => `
-          <div class="coupon-item ${c.used ? 'used' : ''}">
-            <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${c.used ? 'used' : 'available'}">${c.used ? '已使用' : '可用'}</span></span>
-            <button class="remove-btn" onclick="removeCoupon('${c._id}')" title="删除">×</button>
-          </div>
-        `).join('');
-      } catch (e) {
-        console.error('获取优惠券列表失败', e);
+      const all = getAllCoupons();
+      const used = getUsedCodes();
+      const custom = getCustomCoupons();
+      if (all.length === 0) {
+        list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
+        return;
       }
+      list.innerHTML = all.map((c, idx) => {
+        const isUsed = used.includes(c.code);
+        const isCustom = custom.some(cc => cc.code === c.code);
+        return `<div class="coupon-item ${isUsed ? 'used' : ''}">
+          <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${isUsed ? 'used' : 'available'}">${isUsed ? '已使用' : '可用'}</span>${isCustom ? ' <span class="coupon-tag available" style="background:rgba(0,243,255,0.15);color:var(--neon-cyan);">自定义</span>' : ''}</span>
+          ${isCustom ? `<button class="remove-btn" onclick="removeCoupon('${escapeHtml(c.code)}')" title="删除">×</button>` : ''}
+        </div>`;
+      }).join('');
     }
 
     function escapeHtml(text) {
@@ -1443,21 +1474,17 @@
 
     async function checkPassword() {
       const input = document.getElementById('pwdInput').value.trim();
-      try {
-        const result = await apiPost('/admin/login', { password: input });
-        if (result.ok) {
-          adminAuthed = true;
-          localStorage.setItem(PWD_STORAGE_KEY, input); // 保存当前密码到本地，确保修改密码时能正确验证旧密码
-          closePwdOverlay();
-          showToast('身份验证通过', 'success');
-          toggleAdmin(); // 调用 toggleAdmin 展开面板并隐藏抽奖区域
-        } else {
-          showToast('密码错误，请重试', 'error');
-          document.getElementById('pwdInput').value = '';
-          document.getElementById('pwdInput').focus();
-        }
-      } catch (e) {
-        showToast('验证失败，请稍后重试', 'error');
+      const storedPwd = getAdminPwd();
+      if (input === storedPwd) {
+        adminAuthed = true;
+        localStorage.setItem(PWD_STORAGE_KEY, input);
+        closePwdOverlay();
+        showToast('身份验证通过', 'success');
+        toggleAdmin();
+      } else {
+        showToast('密码错误，请重试', 'error');
+        document.getElementById('pwdInput').value = '';
+        document.getElementById('pwdInput').focus();
       }
     }
 
@@ -1499,19 +1526,9 @@
         return;
       }
       openConfirm(`确定将管理员密码修改为 <strong>${escapeHtml(input)}</strong> 吗？`, async () => {
-        try {
-          const oldPwd = localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
-          const result = await apiPost('/admin/password', { oldPassword: oldPwd, newPassword: input });
-          if (result.ok) {
-            localStorage.setItem(PWD_STORAGE_KEY, input);
-            document.getElementById('newPwdInput').value = '';
-            showToast('密码修改成功', 'success');
-          } else {
-            showToast(result.message || '修改失败', 'error');
-          }
-        } catch (e) {
-          showToast('修改失败，请稍后重试', 'error');
-        }
+        localStorage.setItem(PWD_STORAGE_KEY, input);
+        document.getElementById('newPwdInput').value = '';
+        showToast('密码修改成功', 'success');
       });
     }
 
@@ -1562,67 +1579,55 @@
       }
       const valueRadio = document.querySelector('input[name="singleValue"]:checked');
       const value = valueRadio ? parseInt(valueRadio.value, 10) : 3;
-      try {
-        const result = await apiPost('/coupons', { codes: [code], value });
-        if (result.added > 0) {
-          input.value = '';
-          renderCouponList();
-          updateStats();
-          showToast(`添加成功 (${value}元券)`, 'success');
-        } else {
-          showToast('该编码已存在', 'error');
-        }
-      } catch (e) {
-        showToast('添加失败，请稍后重试', 'error');
+      const custom = getCustomCoupons();
+      if (custom.some(c => c.code === code) || DEFAULT_COUPONS.some(c => c.code === code)) {
+        showToast('该编码已存在', 'error');
+        return;
       }
+      custom.push({ code, value });
+      setCustomCoupons(custom);
+      input.value = '';
+      renderCouponList();
+      updateStats();
+      showToast(`添加成功 (${value}元券)`, 'success');
     }
 
-    async function removeCoupon(id) {
-      try {
-        await apiDelete('/coupons', { id });
-        renderCouponList();
-        updateStats();
-      } catch (e) {
-        showToast('删除失败', 'error');
-      }
+    async function removeCoupon(code) {
+      let custom = getCustomCoupons();
+      custom = custom.filter(c => c.code !== code);
+      setCustomCoupons(custom);
+      renderCouponList();
+      updateStats();
+      showToast('已删除', 'success');
     }
 
     async function clearAllData() {
       openConfirm('确定要<strong>清空所有数据</strong>吗？此操作不可恢复！', async () => {
-        try {
-          await apiDelete('/all');
-          localStorage.removeItem(USER_KEY);
-          renderCouponList();
-          updateStats();
-          checkUserStatus();
-
-          showToast('所有数据已清空', 'success');
-        } catch (e) {
-          showToast('清空失败', 'error');
-        }
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(USED_KEY);
+        localStorage.removeItem(CUSTOM_COUPONS_KEY);
+        renderCouponList();
+        updateStats();
+        checkUserStatus();
+        showToast('所有数据已清空', 'success');
       });
     }
 
     async function exportData() {
-      try {
-        const couponsRes = await apiGet('/coupons');
-        const recordsRes = await apiGet('/records');
-        const exportObj = {
-          exportTime: new Date().toLocaleString('zh-CN'),
-          coupons: couponsRes.coupons || [],
-          records: recordsRes.records || []
-        };
-        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `cyber-draw-backup-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('数据已导出', 'success');
-      } catch (e) {
-        showToast('导出失败', 'error');
-      }
+      const exportObj = {
+        exportTime: new Date().toLocaleString('zh-CN'),
+        coupons: getAllCoupons(),
+        used: getUsedCodes(),
+        custom: getCustomCoupons()
+      };
+      const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cyber-draw-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('数据已导出', 'success');
     }
 
     // ===================== 抽奖逻辑 =====================
@@ -1653,51 +1658,35 @@
         return;
       }
 
+      // 检查是否有可用优惠券
+      const available = getAvailableCoupons();
+      if (available.length === 0) {
+        showToast('优惠券已被抽完，下次再来吧', 'error');
+        return;
+      }
+
       isDrawing = true;
       const btn = document.getElementById('drawBtn');
       const wheel = document.getElementById('drawWheel');
       btn.disabled = true;
       wheel.classList.add('spinning');
 
-      try {
-        const result = await apiPost('/draw', { username });
+      // 模拟抽奖动画
+      await new Promise(r => setTimeout(r, 2000));
 
-        // 停止动画
-        wheel.classList.remove('spinning');
-        isDrawing = false;
-        btn.disabled = false;
+      // 随机选取
+      const winner = available[Math.floor(Math.random() * available.length)];
+      markCodeUsed(winner.code);
+      setUserRecord({ code: winner.code, value: winner.value, time: new Date().toISOString() });
 
-        if (result.error === 'already_played') {
-          showToast('该邮箱已参与过抽奖', 'error');
-          if (result.record) {
-            setUserRecord({ code: result.record.code, value: result.record.value, time: result.record.time || new Date().toISOString() });
-            checkUserStatus();
+      // 停止动画
+      wheel.classList.remove('spinning');
+      isDrawing = false;
+      btn.disabled = false;
 
-          }
-          return;
-        }
-
-        if (result.error === 'empty') {
-          showToast('优惠券已被抽完，下次再来吧', 'error');
-          return;
-        }
-
-        if (result.ok) {
-          setUserRecord({ code: result.code, value: result.value, time: new Date().toISOString() });
-          showResult(result.code, result.value);
-          updateStats();
-          if (adminVisible) renderCouponList();
-          checkUserStatus();
-
-        } else {
-          showToast(result.message || '抽奖失败', 'error');
-        }
-      } catch (e) {
-        wheel.classList.remove('spinning');
-        isDrawing = false;
-        btn.disabled = false;
-        showToast('网络错误，请稍后重试', 'error');
-      }
+      showResult(winner.code, winner.value);
+      updateStats();
+      if (adminVisible) renderCouponList();
     }
 
     function showRecordModal() {
@@ -1749,7 +1738,6 @@
     initParticles();
     updateStats();
     checkUserStatus();
-
 
     // Enter键触发抽奖
     document.getElementById('username').addEventListener('keypress', (e) => {
