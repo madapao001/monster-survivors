@@ -236,7 +236,39 @@
       font-size: 1.3rem;
     }
 
-/* 输入框 */
+    /* 管理员区域 */
+    .admin-toggle {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .admin-toggle button {
+      background: transparent;
+      border: 1px solid rgba(255, 0, 255, 0.4);
+      color: var(--neon-pink);
+      padding: 8px 20px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .admin-toggle button:hover {
+      background: rgba(255, 0, 255, 0.15);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+    }
+
+    .admin-panel {
+      display: none;
+    }
+
+    .admin-panel.active {
+      display: block;
+    }
+
+    /* 输入框 */
     .cyber-input-group {
       display: flex;
       gap: 12px;
@@ -1036,7 +1068,28 @@
       <div class="subtitle">赛 博 优 惠 券 抽 奖 系 统</div>
     </header>
 
-<!-- 抽奖记录弹窗 -->
+    <!-- 密码弹窗 -->
+    <div class="pwd-overlay" id="pwdOverlay">
+      <div class="pwd-box">
+        <div class="pwd-title">◆ 身份验证 ◆</div>
+        <input type="password" class="pwd-input" id="pwdInput" placeholder="请输入管理员密码" maxlength="20">
+        <button class="cyber-btn pink" onclick="checkPassword()" style="width:100%;">确认</button>
+      </div>
+    </div>
+
+    <!-- 自定义确认弹窗 -->
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="pwd-title" style="margin-bottom:16px;">◆ 确认操作 ◆</div>
+        <div class="confirm-msg" id="confirmMsg">确定执行此操作吗？</div>
+        <div class="confirm-btns">
+          <button class="cyber-btn pink" onclick="onConfirmCancel()" style="font-size:0.75rem;">取消</button>
+          <button class="cyber-btn" onclick="onConfirmOk()" style="font-size:0.75rem;">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 抽奖记录弹窗 -->
     <div class="confirm-overlay" id="recordOverlay">
       <div class="confirm-box" style="max-width: 420px;">
         <div class="pwd-title" style="margin-bottom: 16px;">◆ 我的抽奖记录 ◆</div>
@@ -1049,10 +1102,97 @@
       </div>
     </div>
 
-<!-- 用户抽奖区 -->
+    <!-- 管理员面板 -->
+    <div class="admin-toggle">
+      <button onclick="toggleAdmin()">◆ 管理员入口 ◆</button>
+    </div>
+
+    <div class="admin-panel cyber-card" id="adminPanel">
+      <div class="card-inner">
+        <div class="card-title"><span class="icon">⚙</span> 优惠券管理终端</div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">5元券批量导入（每行一个编码）</label>
+          <textarea class="cyber-textarea" id="batchInput5" placeholder="COUPON001&#10;COUPON002&#10;COUPON003"></textarea>
+          <button class="cyber-btn yellow" onclick="addBatchCoupons(5)" style="font-size:0.8rem;">导入5元券</button>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">3元券批量导入（每行一个编码）</label>
+          <textarea class="cyber-textarea" id="batchInput3" placeholder="COUPON101&#10;COUPON102&#10;COUPON103"></textarea>
+          <button class="cyber-btn" onclick="addBatchCoupons(3)" style="font-size:0.8rem;">导入3元券</button>
+        </div>
+
+        <div style="margin-top: 20px; margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block; margin-bottom: 8px;">单个添加</label>
+          <div class="value-select">
+            <label>
+              <input type="radio" name="singleValue" value="5" checked>
+              <span>5元券</span>
+            </label>
+            <label>
+              <input type="radio" name="singleValue" value="3">
+              <span>3元券</span>
+            </label>
+          </div>
+          <div class="cyber-input-group">
+            <input type="text" class="cyber-input" id="singleInput" placeholder="输入优惠券编码">
+            <button class="cyber-btn pink" onclick="addSingleCoupon()">添加</button>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-value" id="totalCount">0</div>
+            <div class="stat-label">总数量</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="available5" style="color: var(--neon-yellow);">0</div>
+            <div class="stat-label">5元剩余</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="available3" style="color: var(--neon-cyan);">0</div>
+            <div class="stat-label">3元剩余</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="usedCount" style="color: #ff6666;">0</div>
+            <div class="stat-label">已抽</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="userCount" style="color: var(--neon-purple);">0</div>
+            <div class="stat-label">参与人数</div>
+          </div>
+        </div>
+
+        <div class="coupon-list" id="couponList"></div>
+
+        <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="cyber-btn pink" onclick="clearAllData()" style="font-size: 0.7rem;">清空所有数据</button>
+          <button class="cyber-btn yellow" onclick="exportData()" style="font-size: 0.7rem;">导出数据</button>
+        </div>
+
+        <!-- 修改密码 -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2);">
+          <div class="card-title" style="font-size: 0.95rem; margin-bottom: 12px;"><span class="icon">🔐</span> 安全设置</div>
+          <div class="cyber-input-group" style="flex-wrap: nowrap;">
+            <input type="password" class="cyber-input" id="newPwdInput" placeholder="输入新密码" style="min-width: 0;">
+            <button class="cyber-btn pink" onclick="changeAdminPassword()" style="white-space: nowrap;">修改密码</button>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255, 0, 255, 0.2); display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="cyber-btn" onclick="saveAllChanges()" style="font-size: 0.8rem; flex: 1;">💾 保存整体</button>
+          <button class="cyber-btn pink" onclick="backToMain()" style="font-size: 0.8rem; flex: 1;">↩ 返回主页面</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户抽奖区 -->
     <div class="cyber-card">
       <div class="card-inner">
         <div class="card-title"><span class="icon">◈</span> 抽奖中心</div>
+
           <div id="drawArea">
           <div class="user-form">
             <input type="email" class="cyber-input" id="username" placeholder="输入自己的 GPT 账号邮箱参与抽奖" maxlength="60">
@@ -1108,50 +1248,31 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ===================== 优惠券池（纯前端）=====================
+    // ===================== API 配置 =====================
+    const API_BASE = 'https://coupon-draw-api.your-account.workers.dev'; // 部署后替换为实际 Workers URL
     const USER_KEY = 'cyber_draw_user_v1';
-    const USED_KEY = 'cyber_draw_used_v1';
 
-    // ====== 在这里添加/修改优惠券编码 ======
-    const COUPON_POOL = [
-      // 5元券
-      { code: 'CYBER5A001', value: 5 },
-      { code: 'CYBER5A002', value: 5 },
-      { code: 'CYBER5A003', value: 5 },
-      { code: 'CYBER5A004', value: 5 },
-      { code: 'CYBER5A005', value: 5 },
-      // 3元券
-      { code: 'CYBER3B001', value: 3 },
-      { code: 'CYBER3B002', value: 3 },
-      { code: 'CYBER3B003', value: 3 },
-      { code: 'CYBER3B004', value: 3 },
-      { code: 'CYBER3B005', value: 3 },
-    ];
-    // =====================================
-
-    function getUsedCodes() {
-      try {
-        const raw = localStorage.getItem(USED_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch (e) {}
-      return [];
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path);
+      return res.json();
     }
 
-    function setUsedCodes(codes) {
-      localStorage.setItem(USED_KEY, JSON.stringify(codes));
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return res.json();
     }
 
-    function getAvailableCoupons() {
-      const used = getUsedCodes();
-      return COUPON_POOL.filter(c => !used.includes(c.code));
-    }
-
-    function markCodeUsed(code) {
-      const used = getUsedCodes();
-      if (!used.includes(code)) {
-        used.push(code);
-        setUsedCodes(used);
-      }
+    async function apiDelete(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return res.json();
     }
 
     function getUserRecord() {
@@ -1194,33 +1315,37 @@
     }
 
     // ===================== UI 更新 =====================
-    function updateStats() {
-      const total = COUPON_POOL.length;
-      const available = getAvailableCoupons();
-      const available5 = available.filter(c => c.value === 5).length;
-      const available3 = available.filter(c => c.value === 3).length;
-      const used = total - available.length;
-      document.getElementById('totalCount').textContent = total;
-      document.getElementById('available5').textContent = available5;
-      document.getElementById('available3').textContent = available3;
-      document.getElementById('usedCount').textContent = used;
-      document.getElementById('userCount').textContent = used;
+    async function updateStats() {
+      try {
+        const stats = await apiGet('/stats');
+        document.getElementById('totalCount').textContent = stats.total;
+        document.getElementById('available5').textContent = stats.available5;
+        document.getElementById('available3').textContent = stats.available3;
+        document.getElementById('usedCount').textContent = stats.used;
+        document.getElementById('userCount').textContent = stats.userCount;
+      } catch (e) {
+        console.error('获取统计失败', e);
+      }
     }
 
-    function renderCouponList() {
+    async function renderCouponList() {
       const list = document.getElementById('couponList');
-      const available = getAvailableCoupons();
-      const used = getUsedCodes();
-      if (COUPON_POOL.length === 0) {
-        list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请联系管理员添加</div>';
-        return;
+      try {
+        const result = await apiGet('/coupons');
+        const coupons = result.coupons || [];
+        if (coupons.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:20px; font-size:0.85rem;">暂无优惠券，请添加</div>';
+          return;
+        }
+        list.innerHTML = coupons.map((c, i) => `
+          <div class="coupon-item ${c.used ? 'used' : ''}">
+            <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${c.used ? 'used' : 'available'}">${c.used ? '已使用' : '可用'}</span></span>
+            <button class="remove-btn" onclick="removeCoupon('${c._id}')" title="删除">×</button>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('获取优惠券列表失败', e);
       }
-      list.innerHTML = COUPON_POOL.map(c => {
-        const isUsed = used.includes(c.code);
-        return `<div class="coupon-item ${isUsed ? 'used' : ''}">
-          <span>${escapeHtml(c.code)} <span class="value-tag v${c.value}">${c.value}元</span> <span class="coupon-tag ${isUsed ? 'used' : 'available'}">${isUsed ? '已使用' : '可用'}</span></span>
-        </div>`;
-      }).join('');
     }
 
     function escapeHtml(text) {
@@ -1236,9 +1361,268 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
+    // ===================== 管理员功能 =====================
+    const DEFAULT_PWD = 'cyber888';
+    const PWD_STORAGE_KEY = 'cyber_draw_admin_pwd';
+
+    function getAdminPwd() {
+      return localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
+    }
+
+    let adminVisible = false;
+    let adminAuthed = false;
+
+    function toggleAdmin() {
+      if (!adminAuthed) {
+        openPwdOverlay();
+        return;
+      }
+      adminVisible = !adminVisible;
+      const panel = document.getElementById('adminPanel');
+      panel.classList.toggle('active', adminVisible);
+      if (adminVisible) {
+        // 清除可能存在的内联 display:none，让 CSS 类接管
+        panel.style.display = '';
+        renderCouponList();
+        updateStats();
+        // 隐藏抽奖区域和标题，只显示管理面板
+        document.querySelector('header').style.display = 'none';
+        document.querySelector('.admin-toggle').style.display = 'none';
+        const userCards = document.querySelectorAll('.cyber-card');
+        userCards.forEach(card => {
+          if (!card.classList.contains('admin-panel')) card.style.display = 'none';
+        });
+        document.querySelector('footer').style.display = 'none';
+      } else {
+        // 显示所有内容（除了管理员面板）
+        document.querySelector('header').style.display = 'block';
+        document.querySelector('.admin-toggle').style.display = 'block';
+        const userCards = document.querySelectorAll('.cyber-card');
+        userCards.forEach(card => {
+          if (!card.classList.contains('admin-panel')) card.style.display = 'block';
+        });
+        document.querySelector('footer').style.display = 'block';
+      }
+    }
+
     function resetToDraw() {
       document.getElementById('username').value = '';
       document.getElementById('username').focus();
+    }
+
+    function backToMain() {
+      adminVisible = false;
+      adminAuthed = false; // 退出后重置认证状态，下次需重新输密码
+      document.getElementById('adminPanel').classList.remove('active');
+      // 显示所有内容
+      document.querySelector('header').style.display = 'block';
+      document.querySelector('.admin-toggle').style.display = 'block';
+      const userCards = document.querySelectorAll('.cyber-card');
+      userCards.forEach(card => {
+        if (!card.classList.contains('admin-panel')) card.style.display = 'block';
+      });
+      document.querySelector('footer').style.display = 'block';
+      checkUserStatus();
+
+    }
+
+    function saveAllChanges() {
+      showToast('所有操作已实时同步到云端，无需手动保存', 'success');
+    }
+
+    function openPwdOverlay() {
+      document.getElementById('pwdOverlay').classList.add('active');
+      document.getElementById('pwdInput').value = '';
+      setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+    }
+
+    function closePwdOverlay() {
+      document.getElementById('pwdOverlay').classList.remove('active');
+      document.getElementById('pwdInput').value = '';
+    }
+
+    async function checkPassword() {
+      const input = document.getElementById('pwdInput').value.trim();
+      try {
+        const result = await apiPost('/admin/login', { password: input });
+        if (result.ok) {
+          adminAuthed = true;
+          localStorage.setItem(PWD_STORAGE_KEY, input); // 保存当前密码到本地，确保修改密码时能正确验证旧密码
+          closePwdOverlay();
+          showToast('身份验证通过', 'success');
+          toggleAdmin(); // 调用 toggleAdmin 展开面板并隐藏抽奖区域
+        } else {
+          showToast('密码错误，请重试', 'error');
+          document.getElementById('pwdInput').value = '';
+          document.getElementById('pwdInput').focus();
+        }
+      } catch (e) {
+        showToast('验证失败，请稍后重试', 'error');
+      }
+    }
+
+    // 自定义确认弹窗
+    let confirmCallback = null;
+
+    function openConfirm(msg, onOk) {
+      document.getElementById('confirmMsg').innerHTML = msg;
+      document.getElementById('confirmOverlay').classList.add('active');
+      confirmCallback = onOk;
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmOverlay').classList.remove('active');
+      confirmCallback = null;
+    }
+
+    function onConfirmOk() {
+      if (confirmCallback) confirmCallback();
+      closeConfirm();
+    }
+
+    function onConfirmCancel() {
+      closeConfirm();
+    }
+
+    document.getElementById('confirmOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeConfirm();
+    });
+
+    async function changeAdminPassword() {
+      const input = document.getElementById('newPwdInput').value.trim();
+      if (!input) {
+        showToast('请输入新密码', 'error');
+        return;
+      }
+      if (input.length < 4) {
+        showToast('密码长度至少4位', 'error');
+        return;
+      }
+      openConfirm(`确定将管理员密码修改为 <strong>${escapeHtml(input)}</strong> 吗？`, async () => {
+        try {
+          const oldPwd = localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
+          const result = await apiPost('/admin/password', { oldPassword: oldPwd, newPassword: input });
+          if (result.ok) {
+            localStorage.setItem(PWD_STORAGE_KEY, input);
+            document.getElementById('newPwdInput').value = '';
+            showToast('密码修改成功', 'success');
+          } else {
+            showToast(result.message || '修改失败', 'error');
+          }
+        } catch (e) {
+          showToast('修改失败，请稍后重试', 'error');
+        }
+      });
+    }
+
+    // 点击遮罩关闭密码弹窗
+    document.getElementById('pwdOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closePwdOverlay();
+    });
+
+    // Enter 键提交密码
+    document.getElementById('pwdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // Enter 键修改密码
+    document.getElementById('newPwdInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') changeAdminPassword();
+    });
+
+    async function addBatchCoupons(value) {
+      const inputId = value === 5 ? 'batchInput5' : 'batchInput3';
+      const input = document.getElementById(inputId);
+      const lines = input.value.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) {
+        showToast('请输入至少一个优惠券编码', 'error');
+        return;
+      }
+      try {
+        const result = await apiPost('/coupons', { codes: lines, value });
+        if (result.error) {
+          showToast(result.error, 'error');
+        } else {
+          input.value = '';
+          renderCouponList();
+          updateStats();
+          showToast(result.message || `成功导入 ${result.added} 个优惠券`, 'success');
+        }
+      } catch (e) {
+        showToast('导入失败，请稍后重试', 'error');
+      }
+    }
+
+    async function addSingleCoupon() {
+      const input = document.getElementById('singleInput');
+      const code = input.value.trim();
+      if (!code) {
+        showToast('请输入优惠券编码', 'error');
+        return;
+      }
+      const valueRadio = document.querySelector('input[name="singleValue"]:checked');
+      const value = valueRadio ? parseInt(valueRadio.value, 10) : 3;
+      try {
+        const result = await apiPost('/coupons', { codes: [code], value });
+        if (result.added > 0) {
+          input.value = '';
+          renderCouponList();
+          updateStats();
+          showToast(`添加成功 (${value}元券)`, 'success');
+        } else {
+          showToast('该编码已存在', 'error');
+        }
+      } catch (e) {
+        showToast('添加失败，请稍后重试', 'error');
+      }
+    }
+
+    async function removeCoupon(id) {
+      try {
+        await apiDelete('/coupons', { id });
+        renderCouponList();
+        updateStats();
+      } catch (e) {
+        showToast('删除失败', 'error');
+      }
+    }
+
+    async function clearAllData() {
+      openConfirm('确定要<strong>清空所有数据</strong>吗？此操作不可恢复！', async () => {
+        try {
+          await apiDelete('/all');
+          localStorage.removeItem(USER_KEY);
+          renderCouponList();
+          updateStats();
+          checkUserStatus();
+
+          showToast('所有数据已清空', 'success');
+        } catch (e) {
+          showToast('清空失败', 'error');
+        }
+      });
+    }
+
+    async function exportData() {
+      try {
+        const couponsRes = await apiGet('/coupons');
+        const recordsRes = await apiGet('/records');
+        const exportObj = {
+          exportTime: new Date().toLocaleString('zh-CN'),
+          coupons: couponsRes.coupons || [],
+          records: recordsRes.records || []
+        };
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cyber-draw-backup-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('数据已导出', 'success');
+      } catch (e) {
+        showToast('导出失败', 'error');
+      }
     }
 
     // ===================== 抽奖逻辑 =====================
@@ -1269,34 +1653,51 @@
         return;
       }
 
-      // 检查是否有可用优惠券
-      const available = getAvailableCoupons();
-      if (available.length === 0) {
-        showToast('优惠券已被抽完，下次再来吧', 'error');
-        return;
-      }
-
       isDrawing = true;
       const btn = document.getElementById('drawBtn');
       const wheel = document.getElementById('drawWheel');
       btn.disabled = true;
       wheel.classList.add('spinning');
 
-      // 模拟抽奖动画延迟
-      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const result = await apiPost('/draw', { username });
 
-      // 随机选取
-      const winner = available[Math.floor(Math.random() * available.length)];
-      markCodeUsed(winner.code);
-      setUserRecord({ code: winner.code, value: winner.value, time: new Date().toISOString() });
+        // 停止动画
+        wheel.classList.remove('spinning');
+        isDrawing = false;
+        btn.disabled = false;
 
-      // 停止动画
-      wheel.classList.remove('spinning');
-      isDrawing = false;
-      btn.disabled = false;
+        if (result.error === 'already_played') {
+          showToast('该邮箱已参与过抽奖', 'error');
+          if (result.record) {
+            setUserRecord({ code: result.record.code, value: result.record.value, time: result.record.time || new Date().toISOString() });
+            checkUserStatus();
 
-      showResult(winner.code, winner.value);
-      updateStats();
+          }
+          return;
+        }
+
+        if (result.error === 'empty') {
+          showToast('优惠券已被抽完，下次再来吧', 'error');
+          return;
+        }
+
+        if (result.ok) {
+          setUserRecord({ code: result.code, value: result.value, time: new Date().toISOString() });
+          showResult(result.code, result.value);
+          updateStats();
+          if (adminVisible) renderCouponList();
+          checkUserStatus();
+
+        } else {
+          showToast(result.message || '抽奖失败', 'error');
+        }
+      } catch (e) {
+        wheel.classList.remove('spinning');
+        isDrawing = false;
+        btn.disabled = false;
+        showToast('网络错误，请稍后重试', 'error');
+      }
     }
 
     function showRecordModal() {
@@ -1349,9 +1750,13 @@
     updateStats();
     checkUserStatus();
 
+
     // Enter键触发抽奖
     document.getElementById('username').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') startDraw();
+    });
+    document.getElementById('singleInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addSingleCoupon();
     });
   </script>
 </body>
