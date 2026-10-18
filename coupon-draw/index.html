@@ -1248,7 +1248,12 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    console.log('[CyberDraw] Version 2.1 loaded');
+    const BUILD_VERSION = 'v2.2-' + Date.now();
+    console.log('[CyberDraw] ' + BUILD_VERSION);
+    document.addEventListener('DOMContentLoaded', function() {
+      const verEl = document.getElementById('pageVersion');
+      if (verEl) verEl.textContent = '(' + BUILD_VERSION + ')';
+    });
     console.log('[CyberDraw] File sha: a3b1e7cc');
     // ===================== 优惠券池（纯前端）=====================
     const USER_KEY = 'cyber_draw_user_v1';
@@ -1603,26 +1608,23 @@
       showToast('已删除', 'success');
     }
 
-    async function clearAllData() {
-      console.log('[DEBUG] clearAllData clicked');
-      if (!window.confirm('确定要清空所有数据吗？此操作不可恢复！')) {
-        console.log('[DEBUG] User cancelled');
-        return;
+    function clearAllData() {
+      if (!confirm('确定要清空所有数据吗？\n\n此操作不可恢复！')) return;
+      var keys = [USER_KEY, USED_KEY, CUSTOM_COUPONS_KEY, 'cyber_draw_records'];
+      var count = 0;
+      for (var i = 0; i < keys.length; i++) {
+        if (localStorage.getItem(keys[i]) !== null) {
+          localStorage.removeItem(keys[i]);
+          count++;
+        }
       }
-      console.log('[DEBUG] User confirmed, clearing data...');
-      try {
-        localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(USED_KEY);
-        localStorage.removeItem(CUSTOM_COUPONS_KEY);
-        console.log('[DEBUG] localStorage items removed');
+      if (count > 0) {
         renderCouponList();
         updateStats();
         checkUserStatus();
-        showToast('所有数据已清空', 'success');
-        console.log('[DEBUG] UI updated');
-      } catch (e) {
-        console.error('[DEBUG] Error during clear:', e);
-        alert('清空出错: ' + e.message);
+        showToast('已清空 ' + count + ' 项数据', 'success');
+      } else {
+        showToast('没有数据需要清空', 'info');
       }
     }
 
