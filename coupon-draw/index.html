@@ -1550,8 +1550,7 @@
     async function addBatchCoupons(value) {
       const inputId = value === 5 ? 'batchInput5' : 'batchInput3';
       const input = document.getElementById(inputId);
-      const lines = input.value.split('
-').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = input.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length === 0) {
         showToast('请输入至少一个优惠券编码', 'error');
         return;
