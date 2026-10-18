@@ -1167,8 +1167,9 @@
         <div class="coupon-list" id="couponList"></div>
 
         <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="cyber-btn pink" onclick="clearAllData()" style="font-size: 0.7rem;">清空所有数据</button>
-          <button class="cyber-btn yellow" onclick="exportData()" style="font-size: 0.7rem;">导出数据</button>
+          <button class="cyber-btn pink" onclick="clearAllData()" style="font-size: 0.7rem;">清空所有优惠券</button>
+          <button class="cyber-btn yellow" onclick="resetDefaultCoupons()" style="font-size: 0.7rem;">恢复默认编码</button>
+          <button class="cyber-btn" onclick="exportData()" style="font-size: 0.7rem;">导出数据</button>
         </div>
 
         <!-- 修改密码 -->
@@ -1251,6 +1252,7 @@
     const BUILD_VERSION = 'v2.2-' + Date.now();
     console.log('[CyberDraw] ' + BUILD_VERSION);
     document.addEventListener('DOMContentLoaded', function() {
+      initDefaultCoupons();
       const verEl = document.getElementById('pageVersion');
       if (verEl) verEl.textContent = '(' + BUILD_VERSION + ')';
     });
@@ -1399,9 +1401,16 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
+    function initDefaultCoupons() {
+      if (!localStorage.getItem(DEFAULT_COUPONS_KEY)) {
+        localStorage.setItem(DEFAULT_COUPONS_KEY, JSON.stringify(DEFAULT_COUPONS));
+      }
+    }
+
     // ===================== 管理员功能 =====================
     const DEFAULT_PWD = 'cyber888';
     const PWD_STORAGE_KEY = 'cyber_draw_admin_pwd';
+    const DEFAULT_COUPONS_KEY = 'cyber_draw_default_coupons';
 
     function getAdminPwd() {
       return localStorage.getItem(PWD_STORAGE_KEY) || DEFAULT_PWD;
@@ -1609,8 +1618,8 @@
     }
 
     function clearAllData() {
-      if (!confirm('确定要清空所有数据吗？\n\n此操作不可恢复！')) return;
-      var keys = [USER_KEY, USED_KEY, CUSTOM_COUPONS_KEY, 'cyber_draw_records'];
+      if (!confirm('确定要清空所有优惠券编码吗？\n\n包括默认编码和自定义编码，此操作不可恢复！')) return;
+      var keys = [USER_KEY, USED_KEY, CUSTOM_COUPONS_KEY, DEFAULT_COUPONS_KEY, 'cyber_draw_records'];
       var count = 0;
       for (var i = 0; i < keys.length; i++) {
         if (localStorage.getItem(keys[i]) !== null) {
@@ -1618,14 +1627,19 @@
           count++;
         }
       }
-      if (count > 0) {
-        renderCouponList();
-        updateStats();
-        checkUserStatus();
-        showToast('已清空 ' + count + ' 项数据', 'success');
-      } else {
-        showToast('没有数据需要清空', 'info');
-      }
+      renderCouponList();
+      updateStats();
+      checkUserStatus();
+      showToast('已清空所有优惠券编码（' + count + ' 项）', 'success');
+    }
+
+    function resetDefaultCoupons() {
+      if (!confirm('确定要恢复默认优惠券编码吗？\n\n这将恢复初始的默认编码列表。')) return;
+      localStorage.setItem(DEFAULT_COUPONS_KEY, JSON.stringify(DEFAULT_COUPONS));
+      localStorage.removeItem(USED_KEY);
+      renderCouponList();
+      updateStats();
+      showToast('已恢复默认优惠券编码', 'success');
     }
 
     async function exportData() {
